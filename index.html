@@ -41,9 +41,10 @@
       <div class="section-label">Account</div>
       <button class="nav-item" id="accountBtn"><span class="nav-left"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="10" r="3"/><path d="M6.5 19c1.2-3 3-4 5.5-4s4.3 1 5.5 4"/></svg><span id="accountLabel">Sign in</span></span></button>
       <button class="nav-item" id="deviceBtn"><span class="nav-left"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="3"/></svg><span>Browser setup</span></span></button>
+      <button class="nav-item" id="settingsBtn"><span class="nav-left"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.35a1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.63 15a1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.65 9a1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.63a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15 4.65a1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.37 9c.12.37.49.93 1.56 1.03H21a2 2 0 1 1 0 4h-.09A1.7 1.7 0 0 0 19.4 15Z"/></svg><span>Settings</span></span></button>
     </section>
 
-    <footer class="sidebar-footer"><span id="modeLabel"><span class="status-dot"></span>Connecting…</span><span>v0.4.9</span></footer>
+    <footer class="sidebar-footer"><span id="modeLabel"><span class="status-dot"></span>Connecting…</span><span>v0.5.0</span></footer>
   </aside>
 
   <main class="main-panel">
@@ -125,6 +126,25 @@
     <div id="deviceSignedOut"><p>Sign in before creating browser tokens.</p></div>
     <div id="deviceSignedIn" hidden><div class="field-row"><div class="field"><label for="deviceName">Browser name</label><input id="deviceName" placeholder="MacBook Chrome"></div><div class="field action-field"><button class="primary-button" id="generateDeviceToken">Generate token</button></div></div><div id="tokenResult" hidden><div class="field"><label for="deviceToken">Private capture token</label><div class="copy-row"><input id="deviceToken" readonly><button class="secondary-button" id="copyDeviceToken">Copy</button></div></div><p class="token-warning">Copy this now. Fetch does not store the readable token.</p></div><div class="device-list" id="deviceList"></div></div>
     <div class="dialog-actions"><button class="secondary-button" id="closeDevice">Close</button></div>
+  </div>
+</div>
+
+<div class="backdrop" id="settingsBackdrop">
+  <div class="dialog wide-dialog" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <h3 id="settingsTitle">Settings</h3>
+    <p>Export a portable copy of your Fetch library. Exporting never changes or removes anything from Fetch.</p>
+    <section class="settings-section">
+      <h4>Export library</h4>
+      <p class="settings-help">Exports include all saved items, regardless of the filter or Area currently on screen.</p>
+      <div class="export-grid">
+        <button class="export-option" id="exportJson"><strong>JSON backup</strong><span>Complete structured data for migration or restoration.</span><em>.json</em></button>
+        <button class="export-option" id="exportCsv"><strong>CSV</strong><span>One row per bookmark for Numbers, Excel, or Sheets.</span><em>.csv</em></button>
+        <button class="export-option" id="exportHtml"><strong>HTML bookmarks</strong><span>A human-readable page you can open in any browser.</span><em>.html</em></button>
+        <button class="export-option export-primary" id="exportArchive"><strong>Full archive</strong><span>JSON, CSV, HTML, plus your saved screenshots in one folder structure.</span><em>.zip</em></button>
+      </div>
+      <p class="settings-help" id="exportStatus"></p>
+    </section>
+    <div class="dialog-actions"><button class="secondary-button" id="closeSettings">Close</button></div>
   </div>
 </div>
 
