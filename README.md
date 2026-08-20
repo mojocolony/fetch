@@ -1,4 +1,4 @@
-# Fetch v0.6.4
+# Fetch v0.6.5
 
 New in v0.6.3: the Fetch dog-with-newspaper mark is now the official app icon across the web app, favicon/PWA assets, and branded UI. The sidebar icon now uses the solid TV-style slate-blue tile, and Add link uses the same slate-blue primary-button treatment. No database changes.
 
@@ -58,3 +58,11 @@ The sidebar footer now reads the displayed version from `APP_VERSION`, preventin
 - Removes the legacy monochrome/invert filter and padding from the full-colour icon asset.
 - Adds cache-busting version parameters to the web app CSS, JS, manifest and icon references.
 - Keeps the TV-style slate-blue Add link button and the v0.6.x feature set unchanged.
+
+
+## v0.6.5 screenshot preview repair
+
+- Screenshot signed URLs now last 12 hours instead of 1 hour.
+- Hover previews refresh an expired screenshot URL automatically.
+- A hover preview is not shown until its image has loaded, preventing the large broken-image panel.
+- Card thumbnails also retry once with a fresh signed URL if an old URL expires while Fetch remains open.

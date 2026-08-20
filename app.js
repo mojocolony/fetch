@@ -8,7 +8,8 @@ const safeJSON=(v,f)=>{try{return v?JSON.parse(v):f}catch{return f}};
 const now=()=>new Date();
 const AREA_COLORS={Watches:'#7c8da7',Technology:'#718d75',Books:'#8a789f',Reading:'#8a789f',Restaurants:'#a97d68','Food & Drink':'#a97d68',Photography:'#9b8268',Travel:'#6f9295'};
 const COLOR_POOL=['#7c8da7','#718d75','#8a789f','#a97d68','#9b8268','#6f9295','#8b7f72','#728696'];
-let items=[],store=null,supabaseClient=null,currentUser=null,searchInput=null,hoverTimer=null;
+let items=[],store=null,supabaseClient=null,currentUser=null,searchInput=null,hoverTimer=null,hoverPreviewToken=0;
+const SCREENSHOT_URL_TTL_SECONDS=43200;
 function setMobileNav(open){document.body.classList.toggle('mobile-nav-open',!!open);const btn=$('mobileNavBtn');if(btn)btn.setAttribute('aria-expanded',String(!!open))}
 function closeMobileNav(){if(window.matchMedia('(max-width:900px)').matches)setMobileNav(false)}
 const initialItemParam=new URLSearchParams(location.search).get('item');
@@ -51,7 +52,7 @@ class SupabaseStore{
   if(itemErr||tagErr||linkErr)throw(itemErr||tagErr||linkErr);
   const tagById=new Map((tagRows||[]).map(t=>[t.id,t.name])); const links=new Map();
   for(const l of linkRows||[]){if(!links.has(l.item_id))links.set(l.item_id,[]);const name=tagById.get(l.tag_id);if(name)links.get(l.item_id).push(name)}
-  return Promise.all((itemRows||[]).map(async item=>{let screenshot_url=null;if(item.screenshot_path){const {data:signed}=await this.client.storage.from('fetch-screenshots').createSignedUrl(item.screenshot_path,3600);screenshot_url=signed?.signedUrl||null}return {...item,tags:(links.get(item.id)||[]).sort((a,b)=>a.localeCompare(b)),screenshot_url}}));
+  return Promise.all((itemRows||[]).map(async item=>{let screenshot_url=null,screenshot_url_expires_at=null;if(item.screenshot_path){const {data:signed}=await this.client.storage.from('fetch-screenshots').createSignedUrl(item.screenshot_path,SCREENSHOT_URL_TTL_SECONDS);screenshot_url=signed?.signedUrl||null;if(screenshot_url)screenshot_url_expires_at=Date.now()+(SCREENSHOT_URL_TTL_SECONDS*1000)}return {...item,tags:(links.get(item.id)||[]).sort((a,b)=>a.localeCompare(b)),screenshot_url,screenshot_url_expires_at}}));
  }
  async save(item,tags=[]){
   const {data:{user}}=await this.client.auth.getUser();if(!user)throw new Error('Sign in to Fetch before adding links.');
@@ -186,7 +187,7 @@ function render(){
   const open=()=>window.open(card.dataset.open,'_blank','noopener');
   card.addEventListener('click',e=>{if(e.target.closest('button,.item-menu'))return;open()});
   card.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('button,.item-menu')){e.preventDefault();open()}});
-  const shot=card.querySelector('.shot-wrap');if(shot){shot.addEventListener('mouseenter',()=>showHoverPreview(item,shot));shot.addEventListener('mouseleave',hideHoverPreview)}
+  const shot=card.querySelector('.shot-wrap');if(shot){const shotImg=shot.querySelector('img');if(shotImg)shotImg.addEventListener('error',()=>repairScreenshotImage(item,shotImg));shot.addEventListener('mouseenter',()=>showHoverPreview(item,shot));shot.addEventListener('mouseleave',hideHoverPreview)}
  });
  document.querySelectorAll('[data-star]').forEach(btn=>btn.addEventListener('click',async e=>{e.stopPropagation();closeItemMenus();const item=items.find(i=>String(i.id)===String(btn.dataset.star));if(!item)return;await toggleStar(item,btn)}));
  document.querySelectorAll('[data-more]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();hideHoverPreview();const menu=document.querySelector(`[data-menu="${CSS.escape(btn.dataset.more)}"]`);const wasOpen=menu?.classList.contains('show');closeItemMenus();if(menu&&!wasOpen)menu.classList.add('show')}));
@@ -194,11 +195,37 @@ function render(){
  document.querySelectorAll('[data-tag]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();exitItemView();state.tag=btn.dataset.tag;state.special='all';syncControls();render()}));buildNav();
 }
 function closeItemMenus(){document.querySelectorAll('.item-menu.show').forEach(m=>m.classList.remove('show'))}
+async function ensureScreenshotUrl(item,force=false){
+ if(!item?.screenshot_path)return item?.screenshot_url||null;
+ const stillFresh=item.screenshot_url&&item.screenshot_url_expires_at&&item.screenshot_url_expires_at>Date.now()+60000;
+ if(!force&&stillFresh)return item.screenshot_url;
+ if(!(store instanceof SupabaseStore))return item.screenshot_url||null;
+ const {data,error}=await store.client.storage.from('fetch-screenshots').createSignedUrl(item.screenshot_path,SCREENSHOT_URL_TTL_SECONDS);
+ if(error)throw error;
+ item.screenshot_url=data?.signedUrl||null;
+ item.screenshot_url_expires_at=item.screenshot_url?Date.now()+(SCREENSHOT_URL_TTL_SECONDS*1000):null;
+ return item.screenshot_url;
+}
+async function repairScreenshotImage(item,img){
+ if(!item||!img||img.dataset.fetchRepair==='1')return;
+ img.dataset.fetchRepair='1';
+ try{const fresh=await ensureScreenshotUrl(item,true);if(fresh&&img.isConnected){img.src=fresh;return}}catch(err){console.warn('Could not refresh screenshot URL',err)}
+ if(img.isConnected){const fallback=document.createElement('div');fallback.className='shot-fallback';fallback.textContent=item.domain||'Saved page';img.replaceWith(fallback)}
+}
+function showHoverFallback(item,anchor,token){const hover=$('hoverPreview');if(!hover||token!==hoverPreviewToken||!anchor.isConnected)return;hover.innerHTML=`<div class="shot-fallback">${esc(item.domain||'Saved page')}</div>`;positionHoverPreview(anchor);hover.classList.add('show')}
+function loadHoverImage(item,anchor,url,token,allowRetry){
+ const hover=$('hoverPreview');if(!hover||token!==hoverPreviewToken||!anchor.isConnected)return;
+ if(!url)return showHoverFallback(item,anchor,token);
+ const img=new Image();img.alt=`Enlarged saved viewport of ${item.title||'saved page'}`;
+ img.onload=()=>{if(token!==hoverPreviewToken||!anchor.isConnected)return;hover.replaceChildren(img);positionHoverPreview(anchor);hover.classList.add('show')};
+ img.onerror=async()=>{if(token!==hoverPreviewToken)return;if(allowRetry&&item.screenshot_path&&store instanceof SupabaseStore){try{const fresh=await ensureScreenshotUrl(item,true);if(token===hoverPreviewToken&&fresh&&fresh!==url)return loadHoverImage(item,anchor,fresh,token,false)}catch(err){console.warn('Could not refresh hover preview URL',err)}}if(token===hoverPreviewToken)hideHoverPreview()};
+ img.src=url;
+}
 function showHoverPreview(item,anchor){
- if(window.innerWidth<900||!item||!anchor)return;clearTimeout(hoverTimer);hoverTimer=setTimeout(()=>{const hover=$('hoverPreview');if(!hover)return;hover.innerHTML=item.screenshot_url?`<img src="${esc(item.screenshot_url)}" alt="Enlarged saved viewport of ${esc(item.title)}">`:`<div class="shot-fallback">${esc(item.domain||'Saved page')}</div>`;positionHoverPreview(anchor);hover.classList.add('show')},160)
+ if(window.innerWidth<900||!item||!anchor)return;clearTimeout(hoverTimer);const token=++hoverPreviewToken;hoverTimer=setTimeout(async()=>{if(token!==hoverPreviewToken)return;let url=item.screenshot_url;try{url=await ensureScreenshotUrl(item,false)}catch(err){console.warn('Could not prepare hover preview URL',err)}if(token!==hoverPreviewToken)return;loadHoverImage(item,anchor,url,token,true)},160)
 }
 function positionHoverPreview(anchor){const hover=$('hoverPreview');if(!hover)return;hover.classList.remove('side-left','side-right');const rect=anchor.getBoundingClientRect();const pad=18;const width=Math.min(620,window.innerWidth*.43);const height=Math.min(430,window.innerHeight-pad*2);let left=rect.right+14;let side='right';if(left+width>window.innerWidth-pad){left=rect.left-width-14;side='left'}left=Math.max(pad,Math.min(left,window.innerWidth-width-pad));let top=Math.max(pad,Math.min(rect.top,window.innerHeight-height-pad));hover.style.width=width+'px';hover.style.height=height+'px';hover.style.left=left+'px';hover.style.top=top+'px';hover.classList.add(side==='right'?'side-right':'side-left')}
-function hideHoverPreview(){clearTimeout(hoverTimer);const hover=$('hoverPreview');if(hover)hover.classList.remove('show')}
+function hideHoverPreview(){clearTimeout(hoverTimer);hoverPreviewToken++;const hover=$('hoverPreview');if(hover)hover.classList.remove('show')}
 function titleSlug(title){return String(title||'item').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,72)||'item'}
 function fetchItemLink(item){return `${location.origin}${location.pathname}?item=${encodeURIComponent(`${titleSlug(item.title)}--${item.id}`)}`}
 async function copyFetchReference(item){const url=fetchItemLink(item);const plain=`${item.title}\n${url}`;try{if(window.ClipboardItem&&navigator.clipboard?.write){const html=`<a href="${esc(url)}">${esc(item.title)}</a>`;await navigator.clipboard.write([new ClipboardItem({'text/plain':new Blob([plain],{type:'text/plain'}),'text/html':new Blob([html],{type:'text/html'})})]);return}}catch(err){console.warn('Rich clipboard unavailable',err)}await navigator.clipboard.writeText(plain)}
@@ -206,7 +233,7 @@ function openEdit(itemId){const item=items.find(i=>String(i.id)===String(itemId)
 async function saveEditItem(){const id=$('editItemId').value;const title=$('editTitle').value.trim(),url=$('editUrl').value.trim(),area=normalizeArea($('editArea').value),tags=normalizeTags($('editTags').value);if(!title||!url)return showNotice('Title and URL are required.');const domain=domainFrom(url);if(!domain)return showNotice('That URL does not look valid.');const patch={title,url,domain,category:area||null,page_date:$('editPageDate').value||null,note:$('editNote').value.trim()||null};try{await store.updateItem(id,patch,tags);close('editBackdrop');await refresh();showNotice('Bookmark updated.')}catch(err){console.error(err);showNotice(err.message||'Could not update this bookmark.',5000)}}
 async function handleItemAction(action,itemId){closeItemMenus();const item=items.find(i=>String(i.id)===String(itemId));if(!item)return;if(action==='edit')return openEdit(itemId);if(action==='copy'){await copyFetchReference(item);return showNotice('Fetch title and link copied.')}if(action==='share'){const url=fetchItemLink(item);if(navigator.share){try{await navigator.share({title:item.title,text:item.title,url});return}catch(err){if(err?.name==='AbortError')return}}await copyFetchReference(item);return showNotice('Fetch title and link copied.')}if(action==='delete'){if(!confirm(`Delete “${item.title}”?`))return;try{await store.softDelete(item.id);await refresh();showNotice('Bookmark deleted.')}catch(err){console.error(err);showNotice(err.message||'Could not delete this bookmark.',5000)}}}
 
-const APP_VERSION='0.6.4';
+const APP_VERSION='0.6.5';
 function exportDateStamp(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function cleanExportItem(item,screenshotFile=null){return {id:item.id,title:item.title,url:item.url,fetch_link:fetchItemLink(item),domain:item.domain,area:item.category,tags:[...(item.tags||[])],saved_as:item.capture_type||'Page',date_saved:item.saved_at||null,page_date:item.page_date||null,starred:!!item.starred,note:item.note||null,selected_text:item.selected_text||null,image_url:item.image_url||null,screenshot_path:item.screenshot_path||null,screenshot_file:screenshotFile}}
 function exportPayload(screenshotFiles={}){return {format:'Fetch library export',schema_version:1,app_version:APP_VERSION,exported_at:new Date().toISOString(),item_count:items.length,items:items.map(item=>cleanExportItem(item,screenshotFiles[item.id]||null))}}
