@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f5f3ef" />
+  <title>Fetch · Personal Retrieval</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Literata:opsz,wght@7..72,500;7..72,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 14-5-5 5-5"/><path d="M4 9h10a6 6 0 0 1 6 6v5"/></svg>
+      </div>
+      <div><h1>Fetch</h1><p>personal retrieval</p></div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Library</div>
+      <button class="nav-item active" data-filter="all"><span class="left"><span>⌂</span><span class="label">Everything</span></span><span class="count" id="count-all"></span></button>
+      <button class="nav-item" data-filter="recent"><span class="left"><span>◷</span><span class="label">Recent</span></span><span class="count" id="count-recent"></span></button>
+      <button class="nav-item" data-filter="starred"><span class="left"><span>☆</span><span class="label">Starred</span></span><span class="count" id="count-starred"></span></button>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Categories</div>
+      <div id="categoryNav"></div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Account</div>
+      <button class="nav-item" id="accountBtn"><span class="left"><span>◉</span><span class="label" id="accountLabel">Sign in</span></span></button>
+      <button class="nav-item" id="deviceBtn"><span class="left"><span>⌁</span><span class="label">Browser setup</span></span></button>
+    </div>
+
+    <div class="sidebar-footer"><span id="modeLabel"><span class="status-dot"></span>Connecting…</span><span>v0.4.0</span></div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="search">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="searchInput" type="search" placeholder="Search titles, domains, notes or saved text…" />
+      </div>
+      <div class="view-toggle" aria-label="View selector">
+        <button data-view="list" title="List view"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></button>
+        <button class="active" data-view="cards" title="Card view"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
+        <button data-view="gallery" title="Gallery view"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg></button>
+      </div>
+      <button class="capture-btn" id="captureBtn"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg><span>Add link</span></button>
+    </header>
+
+    <section class="content">
+      <div class="notice" id="notice"></div>
+      <div class="heading-row">
+        <div class="heading"><h2 id="viewTitle">Everything</h2><p id="resultText"></p></div>
+        <div class="data-tools">
+          <div class="tool-group">
+            <span class="tool-label">Filter</span>
+            <button class="filter-btn" id="filterBtn" aria-expanded="false">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16"/><path d="M7 12h10"/><path d="M10 19h4"/></svg>
+              <span>Filter</span><span class="filter-badge" id="filterBadge">0</span>
+            </button>
+            <div class="filter-panel" id="filterPanel">
+              <h3>Filter results</h3>
+              <div class="filter-field"><label for="filterCategory">Category</label><select id="filterCategory"><option value="">Any category</option></select></div>
+              <div class="filter-field"><label for="filterDomain">Domain</label><input id="filterDomain" list="domainOptions" placeholder="Any domain, or start typing…"><datalist id="domainOptions"></datalist></div>
+              <div class="filter-field"><label for="filterDate">Date saved</label><select id="filterDate"><option value="">Any time</option><option value="today">Today</option><option value="week">Last 7 days</option><option value="month">Last 30 days</option><option value="quarter">Last 90 days</option></select></div>
+              <div class="filter-field"><label for="filterPageDate">Page date</label><select id="filterPageDate"><option value="">Any page date</option><option value="page-week">Last 7 days</option><option value="page-month">Last 30 days</option><option value="page-quarter">Last 90 days</option><option value="page-halfyear">Last 6 months</option><option value="page-year">Last year</option><option value="page-1-2">1–2 years ago</option><option value="page-2-5">2–5 years ago</option><option value="page-older">More than 5 years ago</option><option value="page-unknown">Unknown date</option></select></div>
+              <div class="filter-field"><label for="filterType">Saved as</label><select id="filterType"><option value="">Any type</option><option value="Page">Page</option><option value="Text">Selected text</option><option value="Image link">Image link</option></select></div>
+              <div class="filter-actions"><button class="text-btn" id="clearFilters">Clear filters</button><button class="done-btn" id="doneFilters">Done</button></div>
+            </div>
+          </div>
+          <div class="tool-group sort">
+            <label class="tool-label" for="sortSelect">Sort by</label>
+            <select id="sortSelect"><option value="newest">Date added · newest</option><option value="oldest">Date added · oldest</option><option value="page-newest">Page date · newest</option><option value="page-oldest">Page date · oldest</option><option value="domain">Domain · A–Z</option><option value="category">Category · A–Z</option><option value="title">Title · A–Z</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="active-filters" id="activeFilters"></div>
+      <div class="items cards" id="items"></div>
+      <div class="empty" id="empty">Nothing matches those filters.</div>
+    </section>
+  </main>
+</div>
+
+<div class="popover-backdrop" id="captureBackdrop">
+  <div class="capture-popover" role="dialog" aria-modal="true">
+    <h3>Add a link</h3>
+    <p>This manual form is for testing the real library. Browser extensions will fill most of this automatically.</p>
+    <div class="field"><label for="captureUrl">URL</label><input id="captureUrl" type="url" placeholder="https://…" /></div>
+    <div class="field"><label for="captureTitle">Title</label><input id="captureTitle" placeholder="Page title" /></div>
+    <div class="field-row">
+      <div class="field"><label for="categoryInput">Category</label><input id="categoryInput" list="categoryOptions" placeholder="Type or create a category…" /><datalist id="categoryOptions"></datalist></div>
+      <div class="field"><label for="captureType">Saved as</label><select id="captureType"><option>Page</option><option>Text</option><option>Image link</option></select></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label for="capturePageDate">Page date</label><input id="capturePageDate" type="date" /></div>
+      <div class="field"><label for="captureImageUrl">Image link (optional)</label><input id="captureImageUrl" type="url" placeholder="https://…" /></div>
+    </div>
+    <div class="field"><label for="captureNote">Note or selected text (optional)</label><textarea id="captureNote" placeholder="Anything worth remembering…"></textarea></div>
+    <div class="capture-actions"><button class="secondary" id="cancelCapture">Cancel</button><button class="primary" id="saveCapture">Save</button></div>
+  </div>
+</div>
+
+<div class="popover-backdrop" id="accountBackdrop">
+  <div class="capture-popover" role="dialog" aria-modal="true">
+    <h3>Fetch account</h3>
+    <p id="accountHelp">Sign in with the same email used for your other personal apps on this Supabase project.</p>
+    <div id="signedOutBox">
+      <div class="field"><label for="authEmail">Email</label><input id="authEmail" type="email" placeholder="you@example.com"></div>
+      <div class="field"><label for="authPassword">Password</label><input id="authPassword" type="password" autocomplete="current-password"></div>
+      <div class="capture-actions"><button class="secondary" id="cancelAccount">Cancel</button><button class="text-btn" id="sendMagicLink">Email me a sign-in link</button><button class="primary" id="signInBtn">Sign in</button></div>
+    </div>
+    <div id="signedInBox" style="display:none">
+      <p id="signedInAs"></p>
+      <div class="capture-actions"><button class="secondary" id="closeAccount">Close</button><button class="primary" id="signOutBtn">Sign out</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="popover-backdrop" id="deviceBackdrop">
+  <div class="capture-popover" role="dialog" aria-modal="true">
+    <h3>Browser setup</h3>
+    <p>Create a private device token for the Chrome or Safari extension. Fetch stores only a one-way hash of the token.</p>
+    <div id="deviceSignedOut" class="notice show">Sign in to Fetch first.</div>
+    <div id="deviceSignedIn" style="display:none">
+      <div class="field"><label for="deviceName">Device name</label><input id="deviceName" value="Chrome on Mac" /></div>
+      <div class="capture-actions" style="justify-content:flex-start"><button class="primary" id="generateDeviceToken">Generate token</button></div>
+      <div class="field" id="tokenResult" style="display:none"><label for="deviceToken">Copy this token into the Fetch extension settings</label><textarea id="deviceToken" readonly></textarea><div class="capture-actions" style="justify-content:flex-start"><button class="secondary" id="copyDeviceToken">Copy token</button></div></div>
+      <div class="field" style="margin-top:16px"><label>Connected devices</label><div id="deviceList" class="device-list"></div></div>
+    </div>
+    <div class="capture-actions"><button class="secondary" id="closeDevice">Close</button></div>
+  </div>
+</div>
+
+<div class="hover-preview" id="hoverPreview"></div>
+<script src="config.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>

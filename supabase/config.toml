@@ -1,0 +1,2 @@
+[functions.fetch-capture]
+verify_jwt = false
