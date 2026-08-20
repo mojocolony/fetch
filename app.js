@@ -267,4 +267,4 @@ function wireUI(){
 function close(id){$(id).classList.remove('show')}
 function savePrefs(){localStorage.setItem(PREF_KEY,JSON.stringify({view:state.view,sort:state.sort}))}
 
-(async function start(){makeSearch();wireUI();await initStore();updateAccountUI();await refresh();if(searchInput){searchInput.textContent='';state.query='';updateSearchClear()}if(supabaseClient&&!currentUser)showNotice('Fetch is connected. Sign in to see your library.',4500)})();
+(async function start(){const versionEl=$('appVersion');if(versionEl)versionEl.textContent='v'+APP_VERSION;makeSearch();wireUI();await initStore();updateAccountUI();await refresh();if(searchInput){searchInput.textContent='';state.query='';updateSearchClear()}if(supabaseClient&&!currentUser)showNotice('Fetch is connected. Sign in to see your library.',4500)})();

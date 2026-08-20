@@ -47,3 +47,8 @@ Complete backup also retains the Supabase schema/function source and the current
 - Mobile swipe gesture opens/closes navigation; in single-item view a right swipe returns to Everything.
 - Image-link capture windows open at a compact height.
 - Supabase migration makes `fetch_items.category` nullable and adds rename/merge helper RPCs.
+
+
+## Version-label hotfix
+
+The sidebar footer now reads the displayed version from `APP_VERSION`, preventing the visible version label from falling behind the actual build.
