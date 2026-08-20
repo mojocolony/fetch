@@ -318,3 +318,17 @@
 #captureBtn{background:var(--blue);color:#fff;border-radius:14px;min-height:54px;padding:0 21px;font-size:17px;font-weight:700;box-shadow:none}
 #captureBtn:hover{background:var(--blue-dark)}
 #captureBtn:active{transform:translateY(1px)}
+
+/* v0.6.4 — repair full-colour Fetch brand icon */
+.app-icon{
+  padding:0 !important;
+  background:transparent !important;
+  overflow:hidden;
+}
+.app-icon img{
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:cover;
+  filter:none !important;
+}

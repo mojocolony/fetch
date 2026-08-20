@@ -1,4 +1,4 @@
-# Fetch v0.6.3
+# Fetch v0.6.4
 
 New in v0.6.3: the Fetch dog-with-newspaper mark is now the official app icon across the web app, favicon/PWA assets, and branded UI. The sidebar icon now uses the solid TV-style slate-blue tile, and Add link uses the same slate-blue primary-button treatment. No database changes.
 
@@ -52,3 +52,9 @@ Complete backup also retains the Supabase schema/function source and the current
 ## Version-label hotfix
 
 The sidebar footer now reads the displayed version from `APP_VERSION`, preventing the visible version label from falling behind the actual build.
+
+## v0.6.4 icon repair
+- Fixes the sidebar Fetch icon rendering as a hollow white square.
+- Removes the legacy monochrome/invert filter and padding from the full-colour icon asset.
+- Adds cache-busting version parameters to the web app CSS, JS, manifest and icon references.
+- Keeps the TV-style slate-blue Add link button and the v0.6.x feature set unchanged.
