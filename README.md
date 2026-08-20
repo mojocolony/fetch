@@ -1,4 +1,6 @@
-# Fetch v0.6.1
+# Fetch v0.6.3
+
+New in v0.6.3: the Fetch dog-with-newspaper mark is now the official app icon across the web app, favicon/PWA assets, and branded UI. The sidebar icon now uses the solid TV-style slate-blue tile, and Add link uses the same slate-blue primary-button treatment. No database changes.
 
 GitHub Pages build for Fetch.
 
@@ -21,7 +23,7 @@ Upload the contents of this folder to the root of the Fetch GitHub repository.
 - Starring updates only the affected item and Starred count instead of redrawing the entire library.
 
 
-## v0.6.1 — mobile and iPad pass
+## v0.6.3 — mobile and iPad pass
 - iPhone/iPad navigation is now an off-canvas drawer instead of a long sidebar above the library.
 - Touch targets and interface text are enlarged on mobile.
 - iPhone top controls are reflowed for thumb-friendly use.
@@ -32,5 +34,16 @@ Upload the contents of this folder to the root of the Fetch GitHub repository.
 - Safe-area spacing added for iPhone/iPad browser chrome and Home Screen use.
 - Added a web-app manifest and Apple mobile-web-app metadata.
 
-## v0.6.1
+Complete backup also retains the Supabase schema/function source and the current Chrome extension source.
+- `extension/safari/` contains the v0.6.3 Safari Web Extension source prepared for Xcode/App Store Connect packaging.
+
+## v0.6.3
 - The Page/Text/Image-link thumbnail label now uses the same translucent frosted-glass treatment as the menu and star controls.
+
+
+## v0.6.3
+- Area is optional; blank Areas appear in the Unsorted system view.
+- Settings can rename or merge Areas and Tags.
+- Mobile swipe gesture opens/closes navigation; in single-item view a right swipe returns to Everything.
+- Image-link capture windows open at a compact height.
+- Supabase migration makes `fetch_items.category` nullable and adds rename/merge helper RPCs.

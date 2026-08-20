@@ -21,7 +21,7 @@
 <div class="app-shell">
   <aside class="sidebar">
     <div class="brand-row">
-      <span class="app-icon" aria-hidden="true"><img src="assets/fetch-mark-transparent.png" alt=""></span>
+      <span class="app-icon" aria-hidden="true"><img src="assets/fetch-icon.png" alt=""></span>
       <div class="brand-copy"><h1>Fetch</h1><p>Save &amp; retrieve</p></div>
       <button class="mobile-nav-close" id="mobileNavClose" aria-label="Close navigation"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
     </div>
@@ -102,7 +102,7 @@
     <h3>Add a link</h3><p>Most captures will come from the browser extension. This is the manual fallback.</p>
     <div class="field"><label for="captureUrl">URL</label><input id="captureUrl" type="url" placeholder="https://…" /></div>
     <div class="field"><label for="captureTitle">Title</label><input id="captureTitle" placeholder="Page title" /></div>
-    <div class="field-row"><div class="field"><label for="areaInput">Area</label><input id="areaInput" list="areaOptions" placeholder="Type or create an area…" /><datalist id="areaOptions"></datalist></div><div class="field"><label for="captureType">Saved as</label><select id="captureType"><option>Page</option><option>Text</option><option>Image link</option></select></div></div>
+    <div class="field-row"><div class="field"><label for="areaInput">Area <span class="optional">optional</span></label><input id="areaInput" list="areaOptions" placeholder="Leave blank for Unsorted" /><datalist id="areaOptions"></datalist></div><div class="field"><label for="captureType">Saved as</label><select id="captureType"><option>Page</option><option>Text</option><option>Image link</option></select></div></div>
     <div class="field"><label for="tagInput">Tags <span class="optional">optional, comma-separated</span></label><input id="tagInput" list="tagOptions" placeholder="NOMOS, Worldtimer, How-to…" /><datalist id="tagOptions"></datalist></div>
     <div class="field"><label for="captureNote">Note or selected text <span class="optional">optional</span></label><textarea id="captureNote" placeholder="Anything worth remembering…"></textarea></div>
     <div class="dialog-actions"><button class="secondary-button" id="cancelCapture">Cancel</button><button class="primary-button" id="saveCapture">Save</button></div>
@@ -115,7 +115,7 @@
     <input id="editItemId" type="hidden" />
     <div class="field"><label for="editTitle">Title</label><input id="editTitle" /></div>
     <div class="field"><label for="editUrl">URL</label><input id="editUrl" type="url" /></div>
-    <div class="field-row"><div class="field"><label for="editArea">Area</label><input id="editArea" list="editAreaOptions" placeholder="Type or create an area…" /><datalist id="editAreaOptions"></datalist></div><div class="field"><label for="editPageDate">Page date <span class="optional">optional</span></label><input id="editPageDate" type="date" /></div></div>
+    <div class="field-row"><div class="field"><label for="editArea">Area <span class="optional">optional</span></label><input id="editArea" list="editAreaOptions" placeholder="Leave blank for Unsorted" /><datalist id="editAreaOptions"></datalist></div><div class="field"><label for="editPageDate">Page date <span class="optional">optional</span></label><input id="editPageDate" type="date" /></div></div>
     <div class="field"><label for="editTags">Tags <span class="optional">optional, comma-separated</span></label><input id="editTags" list="editTagOptions" placeholder="NOMOS, Worldtimer, How-to…" /><datalist id="editTagOptions"></datalist></div>
     <div class="field"><label for="editNote">Note <span class="optional">optional</span></label><textarea id="editNote" placeholder="Anything worth remembering…"></textarea></div>
     <div class="dialog-actions"><button class="secondary-button" id="cancelEdit">Cancel</button><button class="primary-button" id="saveEdit">Save changes</button></div>
@@ -140,7 +140,27 @@
 <div class="backdrop" id="settingsBackdrop">
   <div class="dialog wide-dialog" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
     <h3 id="settingsTitle">Settings</h3>
-    <p>Export a portable copy of your Fetch library. Exporting never changes or removes anything from Fetch.</p>
+    <p>Manage how Fetch is organized, or export a portable copy of your library.</p>
+    <section class="settings-section manage-section">
+      <h4>Manage Areas &amp; Tags</h4>
+      <p class="settings-help">Rename an Area or Tag everywhere it is used. If the new name already exists, Fetch can merge them.</p>
+      <div class="manage-grid">
+        <div class="manage-box">
+          <label for="manageAreaSelect">Area</label>
+          <select id="manageAreaSelect"></select>
+          <label for="renameAreaInput">New name</label>
+          <div class="rename-row"><input id="renameAreaInput" autocomplete="off"><button class="secondary-button" id="renameAreaBtn">Rename</button></div>
+          <p>Unsorted is automatic and cannot be renamed.</p>
+        </div>
+        <div class="manage-box">
+          <label for="manageTagSelect">Tag</label>
+          <select id="manageTagSelect"></select>
+          <label for="renameTagInput">New name</label>
+          <div class="rename-row"><input id="renameTagInput" autocomplete="off"><button class="secondary-button" id="renameTagBtn">Rename</button></div>
+          <p>Renaming updates every bookmark using that Tag.</p>
+        </div>
+      </div>
+    </section>
     <section class="settings-section">
       <h4>Export library</h4>
       <p class="settings-help">Exports include all saved items, regardless of the filter or Area currently on screen.</p>

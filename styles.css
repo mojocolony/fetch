@@ -298,3 +298,23 @@
   box-shadow:0 2px 10px rgba(18,23,26,.10),inset 0 0 0 1px rgba(25,31,35,.05);
   text-shadow:0 1px 2px rgba(0,0,0,.58);
 }
+
+
+/* v0.6.3 — optional Areas, organization manager, and mobile gesture polish */
+.manage-section{border-bottom:1px solid var(--line);padding-bottom:22px;margin-bottom:22px}
+.manage-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.manage-box{border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.54);padding:14px}
+.manage-box>label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:0 0 6px}
+.manage-box>label:not(:first-child){margin-top:12px}
+.manage-box select,.manage-box input{width:100%;min-height:42px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);padding:9px 10px;font:inherit;font-size:14px}
+.rename-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+.rename-row .secondary-button{min-width:84px}
+.manage-box p{font-size:12px;color:var(--muted);line-height:1.45;margin:10px 0 0}
+@media(max-width:620px){.manage-grid{grid-template-columns:1fr}.manage-box select,.manage-box input{font-size:16px;min-height:44px}.rename-row{grid-template-columns:1fr}.rename-row .secondary-button{width:100%}}
+
+/* v0.6.3 — Fetch brand alignment with TV */
+.app-icon{overflow:hidden;background:var(--blue)}
+.app-icon img{display:block;width:100%;height:100%;object-fit:cover}
+#captureBtn{background:var(--blue);color:#fff;border-radius:14px;min-height:54px;padding:0 21px;font-size:17px;font-weight:700;box-shadow:none}
+#captureBtn:hover{background:var(--blue-dark)}
+#captureBtn:active{transform:translateY(1px)}
