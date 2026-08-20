@@ -1,8 +1,13 @@
-# Fetch v0.4.2
+# Fetch v0.4.4
 
 Fetch is a lightweight personal retrieval system for saving links with a tiny visual memory of the page, then refinding them through Areas, Tags, domains, dates, search, and multiple visual views.
 
-## What changed in 0.4.2
+## What changed in 0.4.4
+
+- Stops unnecessary full-library re-renders when returning to the Fetch browser tab.
+- Supabase session/token refresh events no longer cause bookmark cards to flash.
+
+## Changes retained from 0.4.2
 
 - Renamed the primary category concept to **Area**.
 - Added optional **multiple Tags** per item, with area-aware tag suggestions in the browser extension.
@@ -27,3 +32,7 @@ The Chrome extension is in `extension/chrome`. Load that folder as an unpacked e
 ## Backend
 
 The live Supabase project has already received the `fetch_tags` and `fetch_item_tags` tables and the v3 `fetch-capture` Edge Function. Existing bookmarks remain intact.
+
+- Replaced the browser-autofillable Search input with a non-form search surface so the Supabase URL cannot be injected into it.
+- Restored the large hover preview of saved viewport screenshots on desktop.
+- Standardized the primary Fetch blue on the TV-app slate blue (#7C8DA7).

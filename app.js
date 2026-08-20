@@ -5,8 +5,8 @@ const $ = id => document.getElementById(id);
 const esc = (v='') => String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const safeJSON=(v,f)=>{try{return v?JSON.parse(v):f}catch{return f}};
 const now=()=>new Date();
-const AREA_COLORS={Watches:'#5b82a4',Technology:'#5a9163',Books:'#8a6bb0',Reading:'#8a6bb0',Restaurants:'#b77554','Food & Drink':'#b77554',Photography:'#b18454',Travel:'#568f94'};
-const COLOR_POOL=['#5b82a4','#5a9163','#8a6bb0','#b77554','#b18454','#568f94','#8b7a68','#6b879b'];
+const AREA_COLORS={Watches:'#7c8da7',Technology:'#718d75',Books:'#8a789f',Reading:'#8a789f',Restaurants:'#a97d68','Food & Drink':'#a97d68',Photography:'#9b8268',Travel:'#6f9295'};
+const COLOR_POOL=['#7c8da7','#718d75','#8a789f','#a97d68','#9b8268','#6f9295','#8b7f72','#728696'];
 let items=[],store=null,supabaseClient=null,currentUser=null,searchInput=null;
 const prefs=safeJSON(localStorage.getItem(PREF_KEY),{});
 const state={area:null,tag:null,domain:'',special:'all',query:'',date:null,pageDate:null,type:null,sort:prefs.sort||'newest',view:prefs.view||'cards'};
@@ -61,13 +61,32 @@ async function initStore(){
   const {createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
   supabaseClient=createClient(CONFIG.supabaseUrl,CONFIG.supabaseAnonKey,{auth:{persistSession:true,detectSessionInUrl:true,autoRefreshToken:true}});
   const {data:{session}}=await supabaseClient.auth.getSession();currentUser=session?.user||null;store=new SupabaseStore(supabaseClient);$('modeLabel').innerHTML='<span class="status-dot"></span>Supabase';
-  supabaseClient.auth.onAuthStateChange(async(_event,session)=>{currentUser=session?.user||null;updateAccountUI();await refresh()});
+  supabaseClient.auth.onAuthStateChange((event,session)=>{
+   const previousUserId=currentUser?.id||null;
+   const nextUser=session?.user||null;
+   const nextUserId=nextUser?.id||null;
+   currentUser=nextUser;
+   updateAccountUI();
+   // Supabase may emit SIGNED_IN/TOKEN_REFRESHED again when a tab regains focus.
+   // Do not rebuild the library unless the actual account changed.
+   if(previousUserId!==nextUserId){setTimeout(()=>refresh(),0)}
+  });
  }catch(err){console.error(err);store=new LocalStore();await store.init();$('modeLabel').textContent='Local fallback';showNotice('Could not connect to Supabase; using local test mode.',5000)}
 }
 
 function makeSearch(){
- const host=$('searchHost'); searchInput=document.createElement('input');searchInput.type='text';searchInput.placeholder='Search your library…';searchInput.setAttribute('aria-label','Search your Fetch library');searchInput.setAttribute('autocomplete','off');searchInput.setAttribute('autocorrect','off');searchInput.setAttribute('spellcheck','false');searchInput.value='';host.appendChild(searchInput);
- searchInput.addEventListener('input',()=>{const v=searchInput.value.trim();if(CONFIG.supabaseUrl&&v.includes('supabase.co')){searchInput.value='';state.query='';return render()}state.query=searchInput.value;render()});
+ const host=$('searchHost');
+ searchInput=document.createElement('div');
+ searchInput.className='search-box';
+ searchInput.setAttribute('contenteditable','true');
+ searchInput.setAttribute('role','searchbox');
+ searchInput.setAttribute('aria-label','Search your Fetch library');
+ searchInput.setAttribute('data-placeholder','Search your library…');
+ searchInput.setAttribute('spellcheck','false');
+ host.appendChild(searchInput);
+ searchInput.addEventListener('keydown',e=>{if(e.key==='Enter')e.preventDefault()});
+ searchInput.addEventListener('paste',e=>{e.preventDefault();const text=(e.clipboardData||window.clipboardData).getData('text/plain').replace(/[\r\n]+/g,' ');document.execCommand('insertText',false,text)});
+ searchInput.addEventListener('input',()=>{state.query=(searchInput.textContent||'').replace(/[\r\n]+/g,' ');render()});
 }
 function allAreas(){return [...new Set(items.map(i=>i.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b))}
 function allTags(area=null){const pool=area?items.filter(i=>i.category===area):items;return [...new Set(pool.flatMap(i=>i.tags||[]))].sort((a,b)=>a.localeCompare(b))}
@@ -96,13 +115,34 @@ function getFiltered(){
  const cmp={newest:(a,b)=>new Date(b.saved_at)-new Date(a.saved_at),oldest:(a,b)=>new Date(a.saved_at)-new Date(b.saved_at),'page-newest':(a,b)=>(b.page_date||'').localeCompare(a.page_date||''),'page-oldest':(a,b)=>(a.page_date||'9999').localeCompare(b.page_date||'9999'),domain:(a,b)=>a.domain.localeCompare(b.domain),area:(a,b)=>a.category.localeCompare(b.category),title:(a,b)=>a.title.localeCompare(b.title)}[state.sort];return rows.sort(cmp||(()=>0));
 }
 function titleForView(){if(state.area)return state.area;if(state.special==='recent')return'Recent';if(state.special==='starred')return'Starred';return'Everything'}
-function cardHTML(item){const color=areaColor(item.category);const tint=hexToRgba(color,.12);const tags=(item.tags||[]).map(t=>`<button class="tag-chip" data-tag="${esc(t)}">${esc(t)}</button>`).join('');const shot=item.screenshot_url?`<img src="${esc(item.screenshot_url)}" alt="Saved viewport of ${esc(item.title)}" loading="lazy">`:`<div class="shot-fallback">${esc(item.domain||'Saved page')}</div>`;return `<article class="item-card" data-open="${esc(item.url)}" tabindex="0" aria-label="Open ${esc(item.title)}"><div class="shot-wrap">${shot}<span class="type-pill">${esc(item.capture_type||'Page')}</span><button class="star-button ${item.starred?'is-starred':''}" data-star="${item.id}" aria-label="${item.starred?'Unstar':'Star'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg></button></div><div class="card-body"><h3 class="item-title">${esc(item.title)}</h3><div class="item-meta"><div class="domain-line"><span class="area-dot" style="background:${color}"></span><span>${esc(item.domain)}</span></div><span class="page-date">${item.page_date?fmtPage(item.page_date):fmtSaved(item.saved_at)}</span></div><div class="tags-row"><span class="area-chip" style="--area-tint:${tint}"><span class="area-dot" style="background:${color}"></span>${esc(item.category)}</span>${tags}</div></div></article>`}
+function cardHTML(item){const color=areaColor(item.category);const tint=hexToRgba(color,.12);const tags=(item.tags||[]).map(t=>`<button class="tag-chip" data-tag="${esc(t)}">${esc(t)}</button>`).join('');const shot=item.screenshot_url?`<img src="${esc(item.screenshot_url)}" alt="Saved viewport of ${esc(item.title)}" loading="lazy">`:`<div class="shot-fallback">${esc(item.domain||'Saved page')}</div>`;return `<article class="item-card" data-id="${esc(item.id)}" data-open="${esc(item.url)}" tabindex="0" aria-label="Open ${esc(item.title)}"><div class="shot-wrap">${shot}<span class="type-pill">${esc(item.capture_type||'Page')}</span><button class="star-button ${item.starred?'is-starred':''}" data-star="${item.id}" aria-label="${item.starred?'Unstar':'Star'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg></button></div><div class="card-body"><h3 class="item-title">${esc(item.title)}</h3><div class="item-meta"><div class="domain-line"><span class="area-dot" style="background:${color}"></span><span>${esc(item.domain)}</span></div><span class="page-date">${item.page_date?fmtPage(item.page_date):fmtSaved(item.saved_at)}</span></div><div class="tags-row"><span class="area-chip" style="--area-tint:${tint}"><span class="area-dot" style="background:${color}"></span>${esc(item.category)}</span>${tags}</div></div></article>`}
 function render(){
  const rows=getFiltered();$('viewTitle').textContent=titleForView();$('resultText').textContent=`${rows.length} item${rows.length===1?'':'s'} · ${state.view==='list'?'compact list':state.view==='gallery'?'visual gallery':'visual bookmarks'}`;$('items').innerHTML=rows.map(cardHTML).join('');$('empty').classList.toggle('show',!rows.length);$('items').style.display=rows.length?'':'none';
- document.querySelectorAll('[data-open]').forEach(card=>{const open=()=>window.open(card.dataset.open,'_blank','noopener');card.addEventListener('click',e=>{if(e.target.closest('button'))return;open()});card.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('button')){e.preventDefault();open()}})});
+ document.querySelectorAll('[data-open]').forEach(card=>{
+  const item=items.find(i=>String(i.id)===String(card.dataset.id));
+  const open=()=>window.open(card.dataset.open,'_blank','noopener');
+  card.addEventListener('click',e=>{if(e.target.closest('button'))return;open()});
+  card.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('button')){e.preventDefault();open()}});
+  card.addEventListener('mouseenter',e=>showHoverPreview(item,e));
+  card.addEventListener('mousemove',moveHoverPreview);
+  card.addEventListener('mouseleave',hideHoverPreview);
+ });
  document.querySelectorAll('[data-star]').forEach(btn=>btn.addEventListener('click',async e=>{e.stopPropagation();const item=items.find(i=>i.id===btn.dataset.star);if(!item)return;await store.update(item.id,{starred:!item.starred});await refresh()}));
  document.querySelectorAll('[data-tag]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();state.tag=btn.dataset.tag;state.special='all';syncControls();render()}));buildNav();
 }
+
+function showHoverPreview(item,e){
+ if(window.innerWidth<900||!item)return;
+ const hover=$('hoverPreview');if(!hover)return;
+ hover.innerHTML=item.screenshot_url?`<img src="${esc(item.screenshot_url)}" alt="">`:`<div class="shot-fallback">${esc(item.domain||'Saved page')}</div>`;
+ hover.classList.add('show');moveHoverPreview(e);
+}
+function moveHoverPreview(e){
+ const hover=$('hoverPreview');if(!hover||!hover.classList.contains('show'))return;
+ const pad=18,w=Math.min(680,window.innerWidth*.48),h=w/1.6;let x=e.clientX+20;if(x+w>window.innerWidth-pad)x=e.clientX-w-20;let y=e.clientY-h*.35;y=Math.max(pad,Math.min(y,window.innerHeight-h-pad));hover.style.left=x+'px';hover.style.top=y+'px';
+}
+function hideHoverPreview(){const hover=$('hoverPreview');if(hover)hover.classList.remove('show')}
+
 async function refresh(){try{items=await store.list()}catch(err){console.error(err);items=[];showNotice(err.message||'Could not load Fetch.',5000)}syncControls();render()}
 
 function openCapture(){$('captureUrl').value='';$('captureTitle').value='';$('areaInput').value=state.area||'';$('tagInput').value='';$('captureType').value='Page';$('captureNote').value='';syncControls();$('captureBackdrop').classList.add('show');setTimeout(()=>$('captureUrl').focus(),0)}
@@ -129,4 +169,4 @@ function wireUI(){
 function close(id){$(id).classList.remove('show')}
 function savePrefs(){localStorage.setItem(PREF_KEY,JSON.stringify({view:state.view,sort:state.sort}))}
 
-(async function start(){makeSearch();wireUI();await initStore();updateAccountUI();await refresh();if(searchInput){searchInput.value='';state.query=''}if(supabaseClient&&!currentUser)showNotice('Fetch is connected. Sign in to see your library.',4500)})();
+(async function start(){makeSearch();wireUI();await initStore();updateAccountUI();await refresh();if(searchInput){searchInput.textContent='';state.query=''}if(supabaseClient&&!currentUser)showNotice('Fetch is connected. Sign in to see your library.',4500)})();
