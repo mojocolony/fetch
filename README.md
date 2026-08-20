@@ -1,4 +1,4 @@
-# Fetch v0.6.0
+# Fetch v0.6.1
 
 GitHub Pages build for Fetch.
 
@@ -21,7 +21,7 @@ Upload the contents of this folder to the root of the Fetch GitHub repository.
 - Starring updates only the affected item and Starred count instead of redrawing the entire library.
 
 
-## v0.6.0 — mobile and iPad pass
+## v0.6.1 — mobile and iPad pass
 - iPhone/iPad navigation is now an off-canvas drawer instead of a long sidebar above the library.
 - Touch targets and interface text are enlarged on mobile.
 - iPhone top controls are reflowed for thumb-friendly use.
@@ -31,3 +31,6 @@ Upload the contents of this folder to the root of the Fetch GitHub repository.
 - Filters and dialogs become bottom sheets on narrow screens.
 - Safe-area spacing added for iPhone/iPad browser chrome and Home Screen use.
 - Added a web-app manifest and Apple mobile-web-app metadata.
+
+## v0.6.1
+- The Page/Text/Image-link thumbnail label now uses the same translucent frosted-glass treatment as the menu and star controls.
