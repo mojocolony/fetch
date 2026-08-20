@@ -1,5 +1,6 @@
 # Fetch
 
-## v0.4.7
-- Fetch deep links (`?item=<uuid>`) now open a dedicated single-bookmark view instead of merely highlighting the card in Everything.
-- Added Back to Everything control and invalid-item handling.
+## v0.4.9
+- Added an × button inside Search to clear the current search in one click.
+- Versioned deployment archive filenames now include the Fetch version number.
+- Retains v0.4.8 equal-height card structure and readable title-slug deep links.

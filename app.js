@@ -8,7 +8,9 @@ const now=()=>new Date();
 const AREA_COLORS={Watches:'#7c8da7',Technology:'#718d75',Books:'#8a789f',Reading:'#8a789f',Restaurants:'#a97d68','Food & Drink':'#a97d68',Photography:'#9b8268',Travel:'#6f9295'};
 const COLOR_POOL=['#7c8da7','#718d75','#8a789f','#a97d68','#9b8268','#6f9295','#8b7f72','#728696'];
 let items=[],store=null,supabaseClient=null,currentUser=null,searchInput=null,hoverTimer=null;
-const initialItemId=new URLSearchParams(location.search).get('item');
+const initialItemParam=new URLSearchParams(location.search).get('item');
+function itemIdFromParam(value){if(!value)return null;const decoded=decodeURIComponent(value);const uuid=decoded.match(/([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i);return uuid?uuid[1]:decoded}
+const initialItemId=itemIdFromParam(initialItemParam);
 const prefs=safeJSON(localStorage.getItem(PREF_KEY),{});
 const state={area:null,tag:null,domain:'',special:'all',query:'',date:null,pageDate:null,type:null,itemId:initialItemId||null,sort:prefs.sort||'newest',view:initialItemId?'cards':(prefs.view||'cards')};
 
@@ -80,6 +82,10 @@ async function initStore(){
  }catch(err){console.error(err);store=new LocalStore();await store.init();$('modeLabel').textContent='Local fallback';showNotice('Could not connect to Supabase; using local test mode.',5000)}
 }
 
+function updateSearchClear(){
+ const clear=$('searchClear');
+ if(clear)clear.hidden=!((searchInput?.textContent||'').trim());
+}
 function makeSearch(){
  const host=$('searchHost');
  searchInput=document.createElement('div');
@@ -90,9 +96,19 @@ function makeSearch(){
  searchInput.setAttribute('data-placeholder','Search your library…');
  searchInput.setAttribute('spellcheck','false');
  host.appendChild(searchInput);
+ const clear=document.createElement('button');
+ clear.id='searchClear';
+ clear.className='search-clear';
+ clear.type='button';
+ clear.hidden=true;
+ clear.setAttribute('aria-label','Clear search');
+ clear.title='Clear search';
+ clear.innerHTML='<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M18 6 6 18M6 6l12 12\"/></svg>';
+ host.appendChild(clear);
  searchInput.addEventListener('keydown',e=>{if(e.key==='Enter')e.preventDefault()});
  searchInput.addEventListener('paste',e=>{e.preventDefault();const text=(e.clipboardData||window.clipboardData).getData('text/plain').replace(/[\r\n]+/g,' ');document.execCommand('insertText',false,text)});
- searchInput.addEventListener('input',()=>{if(state.itemId)exitItemView();state.query=(searchInput.textContent||'').replace(/[\r\n]+/g,' ');render()});
+ searchInput.addEventListener('input',()=>{if(state.itemId)exitItemView();state.query=(searchInput.textContent||'').replace(/[\r\n]+/g,' ');updateSearchClear();render()});
+ clear.addEventListener('click',()=>{searchInput.textContent='';state.query='';updateSearchClear();searchInput.focus();render()});
 }
 function allAreas(){return [...new Set(items.map(i=>i.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b))}
 function allTags(area=null){const pool=area?items.filter(i=>i.category===area):items;return [...new Set(pool.flatMap(i=>i.tags||[]))].sort((a,b)=>a.localeCompare(b))}
@@ -107,6 +123,7 @@ function enterItemView(itemId,replaceUrl=false){
  state.itemId=itemId||null;
  state.area=null;state.tag=null;state.domain='';state.date=null;state.pageDate=null;state.type=null;state.special='all';state.query='';
  if(searchInput)searchInput.textContent='';
+ updateSearchClear();
  if(replaceUrl&&itemId){const url=new URL(location.href);url.searchParams.set('item',itemId);history.replaceState({},'',url.pathname+url.search+url.hash)}
 }
 function buildNav(){
@@ -155,10 +172,12 @@ function showHoverPreview(item,anchor){
 }
 function positionHoverPreview(anchor){const hover=$('hoverPreview');if(!hover)return;hover.classList.remove('side-left','side-right');const rect=anchor.getBoundingClientRect();const pad=18;const width=Math.min(620,window.innerWidth*.43);const height=Math.min(430,window.innerHeight-pad*2);let left=rect.right+14;let side='right';if(left+width>window.innerWidth-pad){left=rect.left-width-14;side='left'}left=Math.max(pad,Math.min(left,window.innerWidth-width-pad));let top=Math.max(pad,Math.min(rect.top,window.innerHeight-height-pad));hover.style.width=width+'px';hover.style.height=height+'px';hover.style.left=left+'px';hover.style.top=top+'px';hover.classList.add(side==='right'?'side-right':'side-left')}
 function hideHoverPreview(){clearTimeout(hoverTimer);const hover=$('hoverPreview');if(hover)hover.classList.remove('show')}
-function fetchItemLink(item){return `${location.origin}${location.pathname}?item=${encodeURIComponent(item.id)}`}
+function titleSlug(title){return String(title||'item').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,72)||'item'}
+function fetchItemLink(item){return `${location.origin}${location.pathname}?item=${encodeURIComponent(`${titleSlug(item.title)}--${item.id}`)}`}
+async function copyFetchReference(item){const url=fetchItemLink(item);const plain=`${item.title}\n${url}`;try{if(window.ClipboardItem&&navigator.clipboard?.write){const html=`<a href="${esc(url)}">${esc(item.title)}</a>`;await navigator.clipboard.write([new ClipboardItem({'text/plain':new Blob([plain],{type:'text/plain'}),'text/html':new Blob([html],{type:'text/html'})})]);return}}catch(err){console.warn('Rich clipboard unavailable',err)}await navigator.clipboard.writeText(plain)}
 function openEdit(itemId){const item=items.find(i=>String(i.id)===String(itemId));if(!item)return;$('editItemId').value=item.id;$('editTitle').value=item.title||'';$('editUrl').value=item.url||'';$('editArea').value=item.category||'';$('editTags').value=(item.tags||[]).join(', ');$('editPageDate').value=item.page_date||'';$('editNote').value=item.note||'';syncControls();$('editBackdrop').classList.add('show');setTimeout(()=>$('editTitle').focus(),0)}
 async function saveEditItem(){const id=$('editItemId').value;const title=$('editTitle').value.trim(),url=$('editUrl').value.trim(),area=$('editArea').value.trim(),tags=normalizeTags($('editTags').value);if(!title||!url||!area)return showNotice('Title, URL and Area are required.');const domain=domainFrom(url);if(!domain)return showNotice('That URL does not look valid.');const patch={title,url,domain,category:area,page_date:$('editPageDate').value||null,note:$('editNote').value.trim()||null};try{await store.updateItem(id,patch,tags);close('editBackdrop');await refresh();showNotice('Bookmark updated.')}catch(err){console.error(err);showNotice(err.message||'Could not update this bookmark.',5000)}}
-async function handleItemAction(action,itemId){closeItemMenus();const item=items.find(i=>String(i.id)===String(itemId));if(!item)return;if(action==='edit')return openEdit(itemId);if(action==='copy'){await navigator.clipboard.writeText(fetchItemLink(item));return showNotice('Fetch link copied.')}if(action==='share'){const url=fetchItemLink(item);if(navigator.share){try{await navigator.share({title:item.title,text:item.title,url});return}catch(err){if(err?.name==='AbortError')return}}await navigator.clipboard.writeText(url);return showNotice('Fetch link copied.')}if(action==='delete'){if(!confirm(`Delete “${item.title}”?`))return;try{await store.softDelete(item.id);await refresh();showNotice('Bookmark deleted.')}catch(err){console.error(err);showNotice(err.message||'Could not delete this bookmark.',5000)}}}
+async function handleItemAction(action,itemId){closeItemMenus();const item=items.find(i=>String(i.id)===String(itemId));if(!item)return;if(action==='edit')return openEdit(itemId);if(action==='copy'){await copyFetchReference(item);return showNotice('Fetch title and link copied.')}if(action==='share'){const url=fetchItemLink(item);if(navigator.share){try{await navigator.share({title:item.title,text:item.title,url});return}catch(err){if(err?.name==='AbortError')return}}await copyFetchReference(item);return showNotice('Fetch title and link copied.')}if(action==='delete'){if(!confirm(`Delete “${item.title}”?`))return;try{await store.softDelete(item.id);await refresh();showNotice('Bookmark deleted.')}catch(err){console.error(err);showNotice(err.message||'Could not delete this bookmark.',5000)}}}
 async function refresh(){try{items=await store.list()}catch(err){console.error(err);items=[];showNotice(err.message||'Could not load Fetch.',5000)}syncControls();render()}
 
 function openCapture(){$('captureUrl').value='';$('captureTitle').value='';$('areaInput').value=state.area||'';$('tagInput').value='';$('captureType').value='Page';$('captureNote').value='';syncControls();$('captureBackdrop').classList.add('show');setTimeout(()=>$('captureUrl').focus(),0)}
@@ -186,4 +205,4 @@ function wireUI(){
 function close(id){$(id).classList.remove('show')}
 function savePrefs(){localStorage.setItem(PREF_KEY,JSON.stringify({view:state.view,sort:state.sort}))}
 
-(async function start(){makeSearch();wireUI();await initStore();updateAccountUI();await refresh();if(searchInput){searchInput.textContent='';state.query=''}if(supabaseClient&&!currentUser)showNotice('Fetch is connected. Sign in to see your library.',4500)})();
+(async function start(){makeSearch();wireUI();await initStore();updateAccountUI();await refresh();if(searchInput){searchInput.textContent='';state.query='';updateSearchClear()}if(supabaseClient&&!currentUser)showNotice('Fetch is connected. Sign in to see your library.',4500)})();
