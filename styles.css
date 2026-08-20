@@ -125,3 +125,30 @@
 .export-option:disabled{opacity:.58;cursor:wait;transform:none}
 #exportStatus{min-height:19px;margin-top:12px;margin-bottom:0}
 @media(max-width:620px){.export-grid{grid-template-columns:1fr}}
+
+
+/* v0.5.1 responsive library, true gallery, and local star updates */
+.content{max-width:none;width:100%}
+.items.cards{grid-template-columns:repeat(auto-fit,minmax(310px,1fr));align-items:start;max-width:1180px}
+.cards .item-card{width:100%;max-width:380px}
+.item-card.removing{opacity:0;transform:scale(.985);transition:opacity .14s ease,transform .14s ease}
+
+/* Gallery is a visual contact sheet rather than a larger card view. */
+.items.gallery{grid-template-columns:repeat(auto-fill,minmax(245px,1fr));gap:14px;align-items:start;max-width:none}
+.gallery .item-card{position:relative;height:auto;aspect-ratio:16/10;display:block;overflow:hidden;border-radius:14px;background:#e8e6e1}
+.gallery .shot-wrap{position:absolute;inset:0;height:auto!important;aspect-ratio:auto!important;border-radius:14px;cursor:pointer}
+.gallery .shot-wrap img{object-fit:cover;object-position:top center}
+.gallery .card-body{position:absolute;left:0;right:0;bottom:0;height:auto!important;padding:46px 14px 13px!important;display:block!important;background:linear-gradient(to bottom,rgba(18,23,27,0),rgba(18,23,27,.84) 58%,rgba(18,23,27,.92));color:#fff;opacity:0;transform:translateY(5px);transition:opacity .16s ease,transform .16s ease;pointer-events:none}
+.gallery .item-card:hover .card-body,.gallery .item-card:focus-within .card-body,.gallery .item-card:focus .card-body{opacity:1;transform:translateY(0)}
+.gallery .item-title{height:auto!important;margin:0 0 7px!important;font-size:15px!important;line-height:1.25;color:#fff;display:-webkit-box!important;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-shadow:0 1px 3px rgba(0,0,0,.42)}
+.gallery .item-meta{height:auto!important;min-height:0!important;font-size:11px;color:rgba(255,255,255,.88)}
+.gallery .domain-line span:last-child{color:rgba(255,255,255,.88)}
+.gallery .page-date{color:rgba(255,255,255,.78)}
+.gallery .tags-row{display:none!important}
+.gallery .type-pill,.gallery .card-actions{opacity:0;transition:opacity .15s ease}
+.gallery .item-card:hover .type-pill,.gallery .item-card:hover .card-actions,.gallery .item-card:focus-within .type-pill,.gallery .item-card:focus-within .card-actions{opacity:1}
+.gallery .item-menu{top:54px;right:9px}
+
+@media(min-width:1450px){.items.cards{max-width:1220px}.cards .item-card{max-width:386px}}
+@media(max-width:1100px){.items.cards{grid-template-columns:repeat(auto-fit,minmax(290px,1fr));max-width:none}.cards .item-card{max-width:none}.items.gallery{grid-template-columns:repeat(auto-fill,minmax(225px,1fr))}}
+@media(max-width:900px){.items.gallery{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}.gallery .item-card{aspect-ratio:4/3}.gallery .card-body{opacity:1;transform:none;padding-top:40px!important}.gallery .type-pill,.gallery .card-actions{opacity:1}}

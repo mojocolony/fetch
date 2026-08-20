@@ -1,4 +1,4 @@
-# Fetch v0.5.0
+# Fetch v0.5.1
 
 GitHub Pages build for Fetch.
 
@@ -11,3 +11,11 @@ Changes in this revision:
 - Readable title + UUID Fetch deep links remain supported.
 
 Upload the contents of this folder to the root of the Fetch GitHub repository.
+
+
+## v0.5.1
+- Tagline changed to **Save & retrieve**.
+- Cards expand responsively to use wide desktop windows, including a third column when space permits.
+- Gallery is now a true visual contact sheet with screenshot-first tiles and metadata revealed on hover.
+- Item count no longer changes wording by view mode.
+- Starring updates only the affected item and Starred count instead of redrawing the entire library.
