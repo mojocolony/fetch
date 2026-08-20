@@ -43,7 +43,7 @@
       <button class="nav-item" id="deviceBtn"><span class="nav-left"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="3"/></svg><span>Browser setup</span></span></button>
     </section>
 
-    <footer class="sidebar-footer"><span id="modeLabel"><span class="status-dot"></span>Connecting…</span><span>v0.4.4</span></footer>
+    <footer class="sidebar-footer"><span id="modeLabel"><span class="status-dot"></span>Connecting…</span><span>v0.4.5</span></footer>
   </aside>
 
   <main class="main-panel">
@@ -97,6 +97,19 @@
     <div class="field"><label for="tagInput">Tags <span class="optional">optional, comma-separated</span></label><input id="tagInput" list="tagOptions" placeholder="NOMOS, Worldtimer, How-to…" /><datalist id="tagOptions"></datalist></div>
     <div class="field"><label for="captureNote">Note or selected text <span class="optional">optional</span></label><textarea id="captureNote" placeholder="Anything worth remembering…"></textarea></div>
     <div class="dialog-actions"><button class="secondary-button" id="cancelCapture">Cancel</button><button class="primary-button" id="saveCapture">Save</button></div>
+  </div>
+</div>
+
+<div class="backdrop" id="editBackdrop">
+  <div class="dialog" role="dialog" aria-modal="true">
+    <h3>Edit bookmark</h3><p>Change the title, Area, Tags, page date, or note without changing the one-click open behaviour.</p>
+    <input id="editItemId" type="hidden" />
+    <div class="field"><label for="editTitle">Title</label><input id="editTitle" /></div>
+    <div class="field"><label for="editUrl">URL</label><input id="editUrl" type="url" /></div>
+    <div class="field-row"><div class="field"><label for="editArea">Area</label><input id="editArea" list="editAreaOptions" placeholder="Type or create an area…" /><datalist id="editAreaOptions"></datalist></div><div class="field"><label for="editPageDate">Page date <span class="optional">optional</span></label><input id="editPageDate" type="date" /></div></div>
+    <div class="field"><label for="editTags">Tags <span class="optional">optional, comma-separated</span></label><input id="editTags" list="editTagOptions" placeholder="NOMOS, Worldtimer, How-to…" /><datalist id="editTagOptions"></datalist></div>
+    <div class="field"><label for="editNote">Note <span class="optional">optional</span></label><textarea id="editNote" placeholder="Anything worth remembering…"></textarea></div>
+    <div class="dialog-actions"><button class="secondary-button" id="cancelEdit">Cancel</button><button class="primary-button" id="saveEdit">Save changes</button></div>
   </div>
 </div>
 
