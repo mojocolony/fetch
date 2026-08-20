@@ -16,7 +16,7 @@
 <div class="app-shell">
   <aside class="sidebar">
     <div class="brand-row">
-      <img class="app-icon" src="assets/fetch-icon.png" alt="" />
+      <span class="app-icon" aria-hidden="true"><img src="assets/fetch-mark-transparent.png" alt=""></span>
       <div class="brand-copy"><h1>Fetch</h1><p>personal retrieval</p></div>
     </div>
 
@@ -43,7 +43,7 @@
       <button class="nav-item" id="deviceBtn"><span class="nav-left"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="3"/></svg><span>Browser setup</span></span></button>
     </section>
 
-    <footer class="sidebar-footer"><span id="modeLabel"><span class="status-dot"></span>Connecting…</span><span>v0.4.5</span></footer>
+    <footer class="sidebar-footer"><span id="modeLabel"><span class="status-dot"></span>Connecting…</span><span>v0.4.7</span></footer>
   </aside>
 
   <main class="main-panel">
@@ -62,7 +62,7 @@
     <section class="content">
       <div class="notice" id="notice"></div>
       <div class="heading-row">
-        <div class="heading-copy"><h2 id="viewTitle">Everything</h2><p id="resultText"></p></div>
+        <div class="heading-copy"><button class="back-to-library" id="backToLibrary" hidden aria-label="Back to Everything">← Back to Everything</button><h2 id="viewTitle">Everything</h2><p id="resultText"></p></div>
         <div class="data-tools">
           <div class="filter-wrap">
             <span class="tool-label">Filter</span>

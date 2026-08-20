@@ -35,3 +35,26 @@
 .item-card.deep-linked{box-shadow:0 0 0 4px rgba(124,141,167,.24),var(--shadow);border-color:#aab6c7}
 @media(max-width:900px){.items.cards{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}.items.gallery{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}.cards .shot-wrap{height:auto;aspect-ratio:1.38}.gallery .shot-wrap{height:auto;aspect-ratio:16/9}.hover-preview{display:none}}
 @media(max-width:620px){.list .shot-wrap{height:130px;min-height:130px}.list .card-actions{left:78px;top:9px}.list .item-menu{left:110px;top:48px}}
+
+
+/* v0.4.6 visual consistency */
+.app-icon{width:54px;height:54px;border-radius:14px;background:var(--blue);display:grid;place-items:center;padding:8px;box-shadow:0 2px 8px rgba(96,112,137,.14)}
+.app-icon img{width:100%;height:100%;object-fit:contain;filter:brightness(0) invert(1);display:block}
+.topbar #captureBtn{height:50px;padding:0 18px;border-radius:14px;background:var(--blue);color:#fff;font-size:17px;font-weight:700;box-shadow:none}
+.topbar #captureBtn:hover{background:#72839d}
+.cards .shot-wrap img,.gallery .shot-wrap img{object-fit:cover;object-position:top center;background:#f7f6f3}
+.star-button,.more-button{background:rgba(32,39,43,.54);border-color:rgba(255,255,255,.72);box-shadow:0 2px 7px rgba(18,23,26,.10)}
+.star-button:hover,.more-button:hover{background:rgba(32,39,43,.68)}
+
+
+/* v0.4.7 direct-item Fetch links */
+.back-to-library{display:inline-flex;align-items:center;gap:7px;border:0;background:transparent;color:var(--blue);font:600 14px/1 Inter,sans-serif;padding:0;margin:0 0 10px;cursor:pointer}
+.back-to-library:hover{text-decoration:underline}
+.single-item-mode .data-tools,.single-item-mode .active-filters{display:none}
+.single-item-mode .heading-row{align-items:flex-start}
+.items.single-item-view{display:grid;grid-template-columns:minmax(360px,520px);max-width:560px}
+.single-item-view .item-card{width:100%}
+.single-item-view.cards .shot-wrap,.single-item-view.gallery .shot-wrap{height:340px}
+.single-item-view.list{max-width:920px;grid-template-columns:1fr}
+.single-item-mode [data-special].active,.single-item-mode .area-nav.active{background:transparent}
+@media(max-width:620px){.items.single-item-view{grid-template-columns:1fr;max-width:none}.single-item-view.cards .shot-wrap,.single-item-view.gallery .shot-wrap{height:auto;aspect-ratio:1.38}}
