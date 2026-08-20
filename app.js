@@ -1,344 +1,132 @@
 const CONFIG = window.FETCH_CONFIG || { demoMode: true };
-const STORAGE_KEY = 'fetch-v1-items';
-const PREF_KEY = 'fetch-v1-prefs';
+const STORAGE_KEY = 'fetch-v042-items';
+const PREF_KEY = 'fetch-v042-prefs';
+const $ = id => document.getElementById(id);
+const esc = (v='') => String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const safeJSON=(v,f)=>{try{return v?JSON.parse(v):f}catch{return f}};
+const now=()=>new Date();
+const AREA_COLORS={Watches:'#5b82a4',Technology:'#5a9163',Books:'#8a6bb0',Reading:'#8a6bb0',Restaurants:'#b77554','Food & Drink':'#b77554',Photography:'#b18454',Travel:'#568f94'};
+const COLOR_POOL=['#5b82a4','#5a9163','#8a6bb0','#b77554','#b18454','#568f94','#8b7a68','#6b879b'];
+let items=[],store=null,supabaseClient=null,currentUser=null,searchInput=null;
+const prefs=safeJSON(localStorage.getItem(PREF_KEY),{});
+const state={area:null,tag:null,domain:'',special:'all',query:'',date:null,pageDate:null,type:null,sort:prefs.sort||'newest',view:prefs.view||'cards'};
 
-const seedItems = [
-  {id:'demo-1',title:'The New Tudor Pelagos FXD GMT',domain:'hodinkee.com',brand:'HODINKEE',category:'Watches',saved_at:'2026-08-20T09:10:00-04:00',page_date:'2026-08-20',capture_type:'Page',starred:true,url:'https://www.hodinkee.com/',note:'',screenshot_url:null,kicker:'Introducing',deck:'A purpose-built GMT with a familiar silhouette and a few details worth a closer look.',theme:['#f4f0e8','#121416','#c83b2f','#d2d6d7','#30363a']},
-  {id:'demo-2',title:'A compact field watch with a surprisingly good dial',domain:'monochrome-watches.com',brand:'MONOCHROME',category:'Watches',saved_at:'2026-08-19T18:20:00-04:00',page_date:'2026-08-18',capture_type:'Page',starred:false,url:'https://monochrome-watches.com/',note:'',screenshot_url:null,kicker:'Hands-On',deck:'Smaller proportions, strong typography and a quietly effective approach to legibility.',theme:['#f8f8f6','#101010','#111111','#a9a49b','#25231f']},
-  {id:'demo-3',title:'Why small independent bookstores are thriving again',domain:'theguardian.com',brand:'The Guardian',category:'Books',saved_at:'2026-08-18T07:30:00-04:00',page_date:'2026-07-09',capture_type:'Text',starred:false,url:'https://www.theguardian.com/',note:'Across cities and small towns, a new generation of shops is finding an audience.',screenshot_url:null,kicker:'Books',deck:'Across cities and small towns, a new generation of shops is finding an audience.',theme:['#ffffff','#172b4d','#052962','#c7a36a','#6d4f30']},
-  {id:'demo-4',title:'A practical guide to local-first software',domain:'inkandswitch.com',brand:'Ink & Switch',category:'Technology',saved_at:'2026-08-17T14:12:00-04:00',page_date:'2026-05-02',capture_type:'Page',starred:true,url:'https://www.inkandswitch.com/',note:'',screenshot_url:null,kicker:'Research',deck:'Software that keeps your data close, works offline, and still collaborates across devices.',theme:['#fbfaf7','#1a2228','#d3543c','#9fb1b8','#354751']},
-  {id:'demo-5',title:'The 12 tables worth booking in Hamilton right now',domain:'tourismhamilton.com',brand:'Hamilton',category:'Restaurants',saved_at:'2026-08-14T12:00:00-04:00',page_date:'2026-03-14',capture_type:'Page',starred:false,url:'https://tourismhamilton.com/',note:'',screenshot_url:null,kicker:'Eat + Drink',deck:'A short list of neighbourhood places worth keeping in mind for the next night out.',theme:['#fffdf8','#25221e','#c7623a','#d7a56f','#6a3c24']},
-  {id:'demo-6',title:'Designing interfaces for recognition instead of recall',domain:'nngroup.com',brand:'NN/g',category:'Technology',saved_at:'2026-08-10T13:45:00-04:00',page_date:'2025-11-22',capture_type:'Text',starred:true,url:'https://www.nngroup.com/',note:'Recognition is easier than recall.',screenshot_url:null,kicker:'UX',deck:'Good interfaces reduce memory load by making choices, objects and actions visible.',theme:['#ffffff','#191919','#d94f26','#91a3aa','#2e3a40']},
-  {id:'demo-7',title:'A modern take on the pilot watch',domain:'fratellowatches.com',brand:'FRATELLO',category:'Watches',saved_at:'2026-08-06T16:20:00-04:00',page_date:'2025-03-05',capture_type:'Image link',starred:false,url:'https://www.fratellowatches.com/',note:'',image_url:'https://www.fratellowatches.com/',screenshot_url:null,kicker:'Watches',deck:'A familiar instrument-watch idea, reconsidered through proportion, colour and case finishing.',theme:['#f8f7f3','#202020','#d24b39','#a6adb0','#273035']},
-  {id:'demo-8',title:'Ten novels arriving this fall that deserve attention',domain:'nytimes.com',brand:'The New York Times',category:'Books',saved_at:'2026-08-02T08:04:00-04:00',page_date:'2024-10-16',capture_type:'Page',starred:false,url:'https://www.nytimes.com/books',note:'',screenshot_url:null,kicker:'Books',deck:'A season of ambitious fiction, returning authors and a handful of intriguing debuts.',theme:['#ffffff','#111111','#111111','#8e6d52','#372d28']},
-  {id:'demo-9',title:'Making tiny screenshots useful: WebP and perceptual quality',domain:'web.dev',brand:'web.dev',category:'Technology',saved_at:'2026-07-29T19:10:00-04:00',page_date:'2024-02-12',capture_type:'Page',starred:false,url:'https://web.dev/',note:'',screenshot_url:null,kicker:'Performance',deck:'How modern image formats can preserve useful visual information at surprisingly small sizes.',theme:['#ffffff','#202124','#1a73e8','#8aa9c8','#2e4d68']},
-  {id:'demo-10',title:'Simple neighborhood ramen, very well executed',domain:'instagram.com',brand:'Instagram',category:'Restaurants',saved_at:'2026-07-25T21:30:00-04:00',page_date:'2023-06-03',capture_type:'Image link',starred:true,url:'https://www.instagram.com/',note:'A place to remember for a casual dinner.',screenshot_url:null,kicker:'Saved post',deck:'A place to remember for a casual dinner: simple room, short menu, very good bowls.',theme:['#ffffff','#262626','#c13584','#d39b56','#6f3427']},
-  {id:'demo-11',title:'Tool watches and the return of smaller cases',domain:'hodinkee.com',brand:'HODINKEE',category:'Watches',saved_at:'2026-07-18T10:00:00-04:00',page_date:'2021-09-28',capture_type:'Page',starred:false,url:'https://www.hodinkee.com/',note:'',screenshot_url:null,kicker:'In-Depth',deck:'Why the most interesting new sports watches are stepping away from oversized proportions.',theme:['#f4f0e8','#121416','#c83b2f','#b3bbc0','#39454d']},
-  {id:'demo-12',title:'A quiet redesign of the reading list',domain:'daringfireball.net',brand:'Daring Fireball',category:'Technology',saved_at:'2026-07-12T09:00:00-04:00',page_date:null,capture_type:'Page',starred:false,url:'https://daringfireball.net/',note:'',screenshot_url:null,kicker:'Linked List',deck:'A small interface change that makes a familiar reading workflow faster and calmer.',theme:['#f3f2ed','#222222','#4a5560','#b4b0a5','#3f3c38']}
-];
+const seedItems=[];
+function domainFrom(url){try{return new URL(url).hostname.replace(/^www\./,'')}catch{return ''}}
+function dayDiff(date){return (now()-new Date(date))/86400000}
+function fmtSaved(date){return new Date(date).toLocaleDateString(undefined,{month:'short',day:'numeric'})}
+function fmtPage(date){return date?new Date(date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'Date unknown'}
+function hash(s){let h=0;for(const c of String(s))h=((h<<5)-h)+c.charCodeAt(0),h|=0;return Math.abs(h)}
+function areaColor(area){return AREA_COLORS[area]||COLOR_POOL[hash(area)%COLOR_POOL.length]}
+function hexToRgba(hex,a){const n=parseInt(hex.slice(1),16);return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`}
+function showNotice(msg,ms=2600){const el=$('notice');el.textContent=msg;el.classList.add('show');clearTimeout(showNotice.t);showNotice.t=setTimeout(()=>el.classList.remove('show'),ms)}
+function normalizeTags(value){return [...new Set(String(value||'').split(',').map(x=>x.trim().replace(/\s+/g,' ')).filter(Boolean))].slice(0,12)}
 
-let items = [];
-let store = null;
-let supabaseClient = null;
-let currentUser = null;
-const savedPrefs = safeJSON(localStorage.getItem(PREF_KEY), {});
-let state = {
-  category: null,
-  domain: '',
-  special: 'all',
-  query: '',
-  date: null,
-  pageDate: null,
-  type: null,
-  sort: savedPrefs.sort || 'newest',
-  view: savedPrefs.view || 'cards'
-};
-
-const $ = (id) => document.getElementById(id);
-const itemsEl = $('items');
-const hover = $('hoverPreview');
-const now = () => new Date();
-
-function safeJSON(value, fallback) {
-  try { return value ? JSON.parse(value) : fallback; } catch { return fallback; }
+class LocalStore{
+ async init(){if(!localStorage.getItem(STORAGE_KEY))localStorage.setItem(STORAGE_KEY,JSON.stringify(seedItems));return this.list()}
+ async list(){return safeJSON(localStorage.getItem(STORAGE_KEY),[])}
+ async save(item,tags=[]){const all=await this.list();const saved={...item,tags};all.unshift(saved);localStorage.setItem(STORAGE_KEY,JSON.stringify(all));return saved}
+ async update(id,patch){const all=(await this.list()).map(x=>x.id===id?{...x,...patch}:x);localStorage.setItem(STORAGE_KEY,JSON.stringify(all));return all.find(x=>x.id===id)}
 }
-function esc(v='') { return String(v).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-function domainFrom(url) {
-  try { return new URL(url).hostname.replace(/^www\./,''); } catch { return ''; }
-}
-function titleCaseDomain(domain) {
-  const base = (domain || 'Saved page').split('.')[0].replace(/[-_]/g,' ');
-  return base.replace(/\b\w/g, c => c.toUpperCase());
-}
-function dayDiff(date) { return (now() - new Date(date)) / 86400000; }
-function formatSaved(date) { return new Date(date).toLocaleDateString(undefined, {month:'short', day:'numeric'}); }
-function formatPageDate(date) { return date ? new Date(date+'T12:00:00').toLocaleDateString(undefined,{month:'short',year:'numeric'}) : 'Date unavailable'; }
-function showNotice(message, ms=2500) {
-  const el = $('notice'); el.textContent = message; el.classList.add('show');
-  clearTimeout(showNotice.t); showNotice.t = setTimeout(()=>el.classList.remove('show'), ms);
+class SupabaseStore{
+ constructor(client){this.client=client}
+ async list(){
+  const [{data:itemRows,error:itemErr},{data:tagRows,error:tagErr},{data:linkRows,error:linkErr}]=await Promise.all([
+    this.client.from('fetch_items').select('*').is('deleted_at',null).order('saved_at',{ascending:false}),
+    this.client.from('fetch_tags').select('id,name'),
+    this.client.from('fetch_item_tags').select('item_id,tag_id')
+  ]);
+  if(itemErr||tagErr||linkErr)throw(itemErr||tagErr||linkErr);
+  const tagById=new Map((tagRows||[]).map(t=>[t.id,t.name])); const links=new Map();
+  for(const l of linkRows||[]){if(!links.has(l.item_id))links.set(l.item_id,[]);const name=tagById.get(l.tag_id);if(name)links.get(l.item_id).push(name)}
+  return Promise.all((itemRows||[]).map(async item=>{let screenshot_url=null;if(item.screenshot_path){const {data:signed}=await this.client.storage.from('fetch-screenshots').createSignedUrl(item.screenshot_path,3600);screenshot_url=signed?.signedUrl||null}return {...item,tags:(links.get(item.id)||[]).sort((a,b)=>a.localeCompare(b)),screenshot_url}}));
+ }
+ async save(item,tags=[]){
+  const {data:{user}}=await this.client.auth.getUser();if(!user)throw new Error('Sign in to Fetch before adding links.');
+  const payload={...item,id:undefined,user_id:user.id};delete payload.screenshot_url;delete payload.tags;
+  const {data,error}=await this.client.from('fetch_items').insert(payload).select().single();if(error)throw error;
+  await this.setTags(data.id,tags,user.id);return {...data,tags};
+ }
+ async setTags(itemId,tags,userId){
+  if(!tags.length)return;
+  for(const name of tags){const normalized_name=name.toLocaleLowerCase();const {data:tag,error}=await this.client.from('fetch_tags').upsert({user_id:userId,name,normalized_name},{onConflict:'user_id,normalized_name'}).select('id').single();if(error)throw error;const {error:linkErr}=await this.client.from('fetch_item_tags').upsert({user_id:userId,item_id:itemId,tag_id:tag.id},{onConflict:'item_id,tag_id'});if(linkErr)throw linkErr}
+ }
+ async update(id,patch){const {data,error}=await this.client.from('fetch_items').update(patch).eq('id',id).select().single();if(error)throw error;return data}
 }
 
-class LocalStore {
-  async init() {
-    const existing = safeJSON(localStorage.getItem(STORAGE_KEY), null);
-    if (!existing) localStorage.setItem(STORAGE_KEY, JSON.stringify(seedItems));
-    return this.list();
-  }
-  async list() { return safeJSON(localStorage.getItem(STORAGE_KEY), seedItems); }
-  async save(item) {
-    const all = await this.list(); all.unshift(item); localStorage.setItem(STORAGE_KEY, JSON.stringify(all)); return item;
-  }
-  async update(id, patch) {
-    const all = (await this.list()).map(x => x.id === id ? {...x, ...patch} : x);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all)); return all.find(x=>x.id===id);
-  }
+async function initStore(){
+ const configured=!CONFIG.demoMode&&CONFIG.supabaseUrl&&CONFIG.supabaseAnonKey;
+ if(!configured){store=new LocalStore();await store.init();$('modeLabel').innerHTML='<span class="status-dot"></span>Local test mode';return}
+ try{
+  const {createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+  supabaseClient=createClient(CONFIG.supabaseUrl,CONFIG.supabaseAnonKey,{auth:{persistSession:true,detectSessionInUrl:true,autoRefreshToken:true}});
+  const {data:{session}}=await supabaseClient.auth.getSession();currentUser=session?.user||null;store=new SupabaseStore(supabaseClient);$('modeLabel').innerHTML='<span class="status-dot"></span>Supabase';
+  supabaseClient.auth.onAuthStateChange(async(_event,session)=>{currentUser=session?.user||null;updateAccountUI();await refresh()});
+ }catch(err){console.error(err);store=new LocalStore();await store.init();$('modeLabel').textContent='Local fallback';showNotice('Could not connect to Supabase; using local test mode.',5000)}
 }
 
-class SupabaseStore {
-  constructor(client) { this.client = client; }
-  async list() {
-    const {data, error} = await this.client.from('fetch_items').select('*').is('deleted_at', null).order('saved_at',{ascending:false});
-    if (error) throw error;
-    const enriched = await Promise.all((data || []).map(async item => {
-      if (!item.screenshot_path) return item;
-      const {data:signed} = await this.client.storage.from('fetch-screenshots').createSignedUrl(item.screenshot_path, 3600);
-      return {...item, screenshot_url:signed?.signedUrl || null};
-    }));
-    return enriched;
-  }
-  async save(item) {
-    const {data:{user}} = await this.client.auth.getUser();
-    if (!user) throw new Error('Sign in to Fetch before adding links from the web app.');
-    const payload = {...item, id:undefined, user_id:user.id};
-    delete payload.screenshot_url; delete payload.brand; delete payload.kicker; delete payload.deck; delete payload.theme;
-    const {data,error} = await this.client.from('fetch_items').insert(payload).select().single();
-    if(error) throw error; return data;
-  }
-  async update(id, patch) {
-    const {data,error} = await this.client.from('fetch_items').update(patch).eq('id',id).select().single();
-    if(error) throw error; return data;
-  }
+function makeSearch(){
+ const host=$('searchHost'); searchInput=document.createElement('input');searchInput.type='text';searchInput.placeholder='Search your library…';searchInput.setAttribute('aria-label','Search your Fetch library');searchInput.setAttribute('autocomplete','off');searchInput.setAttribute('autocorrect','off');searchInput.setAttribute('spellcheck','false');searchInput.value='';host.appendChild(searchInput);
+ searchInput.addEventListener('input',()=>{const v=searchInput.value.trim();if(CONFIG.supabaseUrl&&v.includes('supabase.co')){searchInput.value='';state.query='';return render()}state.query=searchInput.value;render()});
 }
+function allAreas(){return [...new Set(items.map(i=>i.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b))}
+function allTags(area=null){const pool=area?items.filter(i=>i.category===area):items;return [...new Set(pool.flatMap(i=>i.tags||[]))].sort((a,b)=>a.localeCompare(b))}
+function allDomains(){return [...new Set(items.map(i=>i.domain).filter(Boolean))].sort((a,b)=>a.localeCompare(b))}
+function buildNav(){
+ const areas=allAreas();$('countAll').textContent=items.length;$('countRecent').textContent=items.filter(i=>dayDiff(i.saved_at)<=7).length;$('countStarred').textContent=items.filter(i=>i.starred).length;
+ $('areaNav').innerHTML=areas.map(area=>{const c=areaColor(area);const count=items.filter(i=>i.category===area).length;return `<button class="nav-item area-nav ${state.area===area?'active':''}" data-area="${esc(area)}" style="--area-tint:${hexToRgba(c,.12)}"><span class="nav-left"><span class="area-dot" style="background:${c}"></span><span>${esc(area)}</span></span><span class="nav-count">${count}</span></button>`}).join('');
+ document.querySelectorAll('[data-area]').forEach(b=>b.addEventListener('click',()=>{state.area=b.dataset.area;state.special='all';state.tag=null;state.domain='';state.date=null;state.pageDate=null;state.type=null;syncControls();render()}));
+ document.querySelectorAll('[data-special]').forEach(b=>b.classList.toggle('active',state.special===b.dataset.special&&!state.area));
+}
+function syncControls(){
+ const areas=allAreas();$('filterArea').innerHTML='<option value="">Any area</option>'+areas.map(a=>`<option value="${esc(a)}">${esc(a)}</option>`).join('');$('filterArea').value=state.area||'';
+ const tags=allTags(state.area);$('filterTag').innerHTML='<option value="">Any tag</option>'+tags.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');if(state.tag&&!tags.includes(state.tag))state.tag=null;$('filterTag').value=state.tag||'';
+ $('domainOptions').innerHTML=allDomains().map(d=>`<option value="${esc(d)}"></option>`).join('');$('filterDomain').value=state.domain||'';$('filterDate').value=state.date||'';$('filterPageDate').value=state.pageDate||'';$('filterType').value=state.type||'';$('sortSelect').value=state.sort;
+ $('areaOptions').innerHTML=areas.map(a=>`<option value="${esc(a)}"></option>`).join('');$('tagOptions').innerHTML=allTags($('areaInput')?.value||state.area).map(t=>`<option value="${esc(t)}"></option>`).join('');
+ document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===state.view));$('items').className=`items ${state.view}`;
+ const count=[state.area,state.tag,state.domain,state.date,state.pageDate,state.type].filter(Boolean).length;$('filterBadge').textContent=count;$('filterBadge').classList.toggle('show',count>0);renderFilterChips();buildNav();
+}
+function renderFilterChips(){const chips=[];if(state.area)chips.push(['Area',state.area,'area']);if(state.tag)chips.push(['Tag',state.tag,'tag']);if(state.domain)chips.push(['Domain',state.domain,'domain']);if(state.date)chips.push(['Saved',labelDate(state.date),'date']);if(state.pageDate)chips.push(['Page',labelPageDate(state.pageDate),'pageDate']);if(state.type)chips.push(['Type',state.type,'type']);$('activeFilters').innerHTML=chips.map(([k,v,key])=>`<button class="filter-chip" data-clear="${key}"><b>${esc(k)}:</b> ${esc(v)} <span>×</span></button>`).join('');document.querySelectorAll('[data-clear]').forEach(b=>b.addEventListener('click',()=>{state[b.dataset.clear]=b.dataset.clear==='domain'?'':null;syncControls();render()}))}
+function labelDate(v){return({today:'Today',week:'Last 7 days',month:'Last 30 days',quarter:'Last 90 days'})[v]||v}
+function labelPageDate(v){return({'page-week':'Last 7 days','page-month':'Last 30 days','page-quarter':'Last 90 days','page-halfyear':'Last 6 months','page-year':'Last year','page-1-2':'1–2 years ago','page-2-5':'2–5 years ago','page-older':'More than 5 years ago','page-unknown':'Unknown'})[v]||v}
+function pageDateMatches(date,filter){if(!filter)return true;if(filter==='page-unknown')return !date;if(!date)return false;const diff=dayDiff(date+'T12:00:00');return filter==='page-week'?diff<=7:filter==='page-month'?diff<=30:filter==='page-quarter'?diff<=90:filter==='page-halfyear'?diff<=183:filter==='page-year'?diff<=365:filter==='page-1-2'?diff>365&&diff<=730:filter==='page-2-5'?diff>730&&diff<=1826:filter==='page-older'?diff>1826:true}
+function getFiltered(){
+ let rows=[...items];if(state.special==='recent')rows=rows.filter(i=>dayDiff(i.saved_at)<=7);if(state.special==='starred')rows=rows.filter(i=>i.starred);if(state.area)rows=rows.filter(i=>i.category===state.area);if(state.tag)rows=rows.filter(i=>(i.tags||[]).includes(state.tag));if(state.domain)rows=rows.filter(i=>i.domain===state.domain);if(state.date)rows=rows.filter(i=>{const d=dayDiff(i.saved_at);return state.date==='today'?d<=1:state.date==='week'?d<=7:state.date==='month'?d<=30:d<=90});if(state.pageDate)rows=rows.filter(i=>pageDateMatches(i.page_date,state.pageDate));if(state.type)rows=rows.filter(i=>i.capture_type===state.type);
+ const q=state.query.trim().toLocaleLowerCase();if(q)rows=rows.filter(i=>[i.title,i.domain,i.category,i.note,i.selected_text,...(i.tags||[])].filter(Boolean).join(' ').toLocaleLowerCase().includes(q));
+ const cmp={newest:(a,b)=>new Date(b.saved_at)-new Date(a.saved_at),oldest:(a,b)=>new Date(a.saved_at)-new Date(b.saved_at),'page-newest':(a,b)=>(b.page_date||'').localeCompare(a.page_date||''),'page-oldest':(a,b)=>(a.page_date||'9999').localeCompare(b.page_date||'9999'),domain:(a,b)=>a.domain.localeCompare(b.domain),area:(a,b)=>a.category.localeCompare(b.category),title:(a,b)=>a.title.localeCompare(b.title)}[state.sort];return rows.sort(cmp||(()=>0));
+}
+function titleForView(){if(state.area)return state.area;if(state.special==='recent')return'Recent';if(state.special==='starred')return'Starred';return'Everything'}
+function cardHTML(item){const color=areaColor(item.category);const tint=hexToRgba(color,.12);const tags=(item.tags||[]).map(t=>`<button class="tag-chip" data-tag="${esc(t)}">${esc(t)}</button>`).join('');const shot=item.screenshot_url?`<img src="${esc(item.screenshot_url)}" alt="Saved viewport of ${esc(item.title)}" loading="lazy">`:`<div class="shot-fallback">${esc(item.domain||'Saved page')}</div>`;return `<article class="item-card" data-open="${esc(item.url)}" tabindex="0" aria-label="Open ${esc(item.title)}"><div class="shot-wrap">${shot}<span class="type-pill">${esc(item.capture_type||'Page')}</span><button class="star-button ${item.starred?'is-starred':''}" data-star="${item.id}" aria-label="${item.starred?'Unstar':'Star'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg></button></div><div class="card-body"><h3 class="item-title">${esc(item.title)}</h3><div class="item-meta"><div class="domain-line"><span class="area-dot" style="background:${color}"></span><span>${esc(item.domain)}</span></div><span class="page-date">${item.page_date?fmtPage(item.page_date):fmtSaved(item.saved_at)}</span></div><div class="tags-row"><span class="area-chip" style="--area-tint:${tint}"><span class="area-dot" style="background:${color}"></span>${esc(item.category)}</span>${tags}</div></div></article>`}
+function render(){
+ const rows=getFiltered();$('viewTitle').textContent=titleForView();$('resultText').textContent=`${rows.length} item${rows.length===1?'':'s'} · ${state.view==='list'?'compact list':state.view==='gallery'?'visual gallery':'visual bookmarks'}`;$('items').innerHTML=rows.map(cardHTML).join('');$('empty').classList.toggle('show',!rows.length);$('items').style.display=rows.length?'':'none';
+ document.querySelectorAll('[data-open]').forEach(card=>{const open=()=>window.open(card.dataset.open,'_blank','noopener');card.addEventListener('click',e=>{if(e.target.closest('button'))return;open()});card.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('button')){e.preventDefault();open()}})});
+ document.querySelectorAll('[data-star]').forEach(btn=>btn.addEventListener('click',async e=>{e.stopPropagation();const item=items.find(i=>i.id===btn.dataset.star);if(!item)return;await store.update(item.id,{starred:!item.starred});await refresh()}));
+ document.querySelectorAll('[data-tag]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();state.tag=btn.dataset.tag;state.special='all';syncControls();render()}));buildNav();
+}
+async function refresh(){try{items=await store.list()}catch(err){console.error(err);items=[];showNotice(err.message||'Could not load Fetch.',5000)}syncControls();render()}
 
-async function initStore() {
-  const configured = !CONFIG.demoMode && CONFIG.supabaseUrl && CONFIG.supabaseAnonKey;
-  if (!configured) {
-    store = new LocalStore();
-    $('modeLabel').innerHTML = '<span class="status-dot"></span>Local test mode';
-    return;
-  }
-  try {
-    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
-    supabaseClient = createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey, {auth:{persistSession:true, detectSessionInUrl:true}});
-    store = new SupabaseStore(supabaseClient);
-    const {data:{session}} = await supabaseClient.auth.getSession();
-    currentUser = session?.user || null;
-    $('modeLabel').innerHTML = '<span class="status-dot connected"></span>Supabase';
-    supabaseClient.auth.onAuthStateChange(async (_event, sessionNow) => {
-      currentUser = sessionNow?.user || null;
-      updateAccountUI();
-      try { await refresh(); } catch (err) { console.error(err); }
-    });
-  } catch (err) {
-    console.error(err);
-    store = new LocalStore();
-    showNotice('Supabase could not load, so Fetch opened in local test mode.', 5000);
-  }
-}
+function openCapture(){$('captureUrl').value='';$('captureTitle').value='';$('areaInput').value=state.area||'';$('tagInput').value='';$('captureType').value='Page';$('captureNote').value='';syncControls();$('captureBackdrop').classList.add('show');setTimeout(()=>$('captureUrl').focus(),0)}
+async function saveManualCapture(){const url=$('captureUrl').value.trim(),title=$('captureTitle').value.trim(),area=$('areaInput').value.trim(),tags=normalizeTags($('tagInput').value);if(!url||!title||!area){showNotice('URL, title and area are required.');return}const domain=domainFrom(url);if(!domain){showNotice('That URL does not look valid.');return}const type=$('captureType').value;const item={id:crypto.randomUUID(),title,url,domain,category:area,saved_at:new Date().toISOString(),page_date:null,capture_type:type,starred:false,note:$('captureNote').value.trim(),selected_text:type==='Text'?$('captureNote').value.trim()||null:null,image_url:null,screenshot_path:null};try{await store.save(item,tags);$('captureBackdrop').classList.remove('show');await refresh();showNotice('Saved to Fetch.')}catch(err){console.error(err);showNotice(err.message||'Could not save this item.',5000)}}
 
-function countsBy(key) { return items.reduce((m,x)=>(m[x[key]]=(m[x[key]]||0)+1,m),{}); }
-function categories() { return Object.keys(countsBy('category')).filter(Boolean).sort((a,b)=>a.localeCompare(b)); }
-function buildNav() {
-  $('count-all').textContent = items.length;
-  $('count-starred').textContent = items.filter(x=>x.starred).length;
-  $('count-recent').textContent = items.filter(x=>dayDiff(x.saved_at)<=7).length;
-  const cats = countsBy('category');
-  $('categoryNav').innerHTML = categories().map(c=>`<button class="nav-item" data-category="${esc(c)}"><span class="left"><span class="category-dot"></span><span class="label">${esc(c)}</span></span><span class="count">${cats[c]}</span></button>`).join('');
-  $('filterCategory').innerHTML = '<option value="">Any category</option>' + categories().map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
-  $('categoryOptions').innerHTML = categories().map(c=>`<option value="${esc(c)}"></option>`).join('');
-  $('domainOptions').innerHTML = Object.keys(countsBy('domain')).filter(Boolean).sort().map(d=>`<option value="${esc(d)}"></option>`).join('');
-  document.querySelectorAll('[data-category]').forEach(b=>b.addEventListener('click',()=>{state.category=b.dataset.category;state.special='all';syncControls();render();}));
-}
-function syncNav() {
-  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
-  if(state.category) document.querySelector(`[data-category="${CSS.escape(state.category)}"]`)?.classList.add('active');
-  else document.querySelector(`[data-filter="${state.special}"]`)?.classList.add('active');
-}
-function syncControls() {
-  syncNav();
-  $('filterCategory').value=state.category||''; $('filterDomain').value=state.domain||''; $('filterDate').value=state.date||''; $('filterPageDate').value=state.pageDate||''; $('filterType').value=state.type||''; $('sortSelect').value=state.sort;
-  document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===state.view));
-  renderFilterSummary();
-}
-function renderFilterSummary() {
-  const parts=[];
-  if(state.special==='recent') parts.push(['special','Recent']);
-  if(state.special==='starred') parts.push(['special','Starred']);
-  if(state.category) parts.push(['category',state.category]);
-  if(state.domain) parts.push(['domain',`Domain: ${state.domain}`]);
-  if(state.date) parts.push(['date',`Saved: ${{today:'Today',week:'Last 7 days',month:'Last 30 days',quarter:'Last 90 days'}[state.date]}`]);
-  if(state.pageDate) parts.push(['pageDate',`Page: ${{'page-week':'Last 7 days','page-month':'Last 30 days','page-quarter':'Last 90 days','page-halfyear':'Last 6 months','page-year':'Last year','page-1-2':'1–2 years ago','page-2-5':'2–5 years ago','page-older':'More than 5 years ago','page-unknown':'Unknown date'}[state.pageDate]}`]);
-  if(state.type) parts.push(['type',state.type==='Text'?'Selected text':state.type]);
-  const panelCount=[state.category,state.domain,state.date,state.pageDate,state.type].filter(Boolean).length;
-  $('filterBadge').textContent=panelCount; $('filterBadge').classList.toggle('show',panelCount>0); $('filterBtn').classList.toggle('active',panelCount>0);
-  $('activeFilters').classList.toggle('show',parts.length>0);
-  $('activeFilters').innerHTML=parts.map(([key,label])=>`<span class="filter-chip">${esc(label)}<button data-clear-filter="${key}" aria-label="Remove ${esc(label)}">×</button></span>`).join('');
-  document.querySelectorAll('[data-clear-filter]').forEach(b=>b.addEventListener('click',()=>clearOneFilter(b.dataset.clearFilter)));
-}
-function clearOneFilter(key) {
-  if(key==='special') state.special='all'; else if(key==='domain') state.domain=''; else if(key==='category') state.category=null; else if(key==='date') state.date=null; else if(key==='pageDate') state.pageDate=null; else if(key==='type') state.type=null;
-  syncControls(); render();
-}
-function matchesPageRange(x) {
-  if(!state.pageDate) return true;
-  if(state.pageDate==='page-unknown') return !x.page_date;
-  if(!x.page_date) return false;
-  const age=dayDiff(x.page_date+'T12:00:00');
-  if(state.pageDate==='page-week') return age>=0 && age<=7;
-  if(state.pageDate==='page-month') return age>=0 && age<=30;
-  if(state.pageDate==='page-quarter') return age>=0 && age<=90;
-  if(state.pageDate==='page-halfyear') return age>=0 && age<=183;
-  if(state.pageDate==='page-year') return age>=0 && age<=365;
-  if(state.pageDate==='page-1-2') return age>365 && age<=730;
-  if(state.pageDate==='page-2-5') return age>730 && age<=1826;
-  if(state.pageDate==='page-older') return age>1826;
-  return true;
-}
-function filtered() {
-  let out=[...items];
-  if(state.category) out=out.filter(x=>x.category===state.category);
-  if(state.domain) out=out.filter(x=>(x.domain||'').toLowerCase().includes(state.domain.toLowerCase()));
-  if(state.special==='starred') out=out.filter(x=>x.starred);
-  if(state.special==='recent') out=out.filter(x=>dayDiff(x.saved_at)<=7);
-  if(state.query){ const q=state.query.toLowerCase(); out=out.filter(x=>`${x.title} ${x.domain} ${x.category} ${x.note||''} ${x.selected_text||''}`.toLowerCase().includes(q)); }
-  if(state.date){ const days={today:1,week:7,month:30,quarter:90}[state.date]; out=out.filter(x=>dayDiff(x.saved_at)<=days); }
-  out=out.filter(matchesPageRange);
-  if(state.type) out=out.filter(x=>x.capture_type===state.type);
-  if(state.sort==='newest') out.sort((a,b)=>new Date(b.saved_at)-new Date(a.saved_at));
-  if(state.sort==='oldest') out.sort((a,b)=>new Date(a.saved_at)-new Date(b.saved_at));
-  if(state.sort==='page-newest') out.sort((a,b)=>(b.page_date||'').localeCompare(a.page_date||''));
-  if(state.sort==='page-oldest') out.sort((a,b)=>{if(!a.page_date)return 1;if(!b.page_date)return -1;return a.page_date.localeCompare(b.page_date);});
-  if(state.sort==='domain') out.sort((a,b)=>(a.domain||'').localeCompare(b.domain||''));
-  if(state.sort==='category') out.sort((a,b)=>(a.category||'').localeCompare(b.category||'') || new Date(b.saved_at)-new Date(a.saved_at));
-  if(state.sort==='title') out.sort((a,b)=>(a.title||'').localeCompare(b.title||''));
-  return out;
-}
-function pageKind(x){ return x.category==='Watches'?'watch':x.category==='Books'?'book':x.category==='Restaurants'?'food':'tech'; }
-function pageShot(x) {
-  if (x.screenshot_url) return `<img class="real-shot" src="${esc(x.screenshot_url)}" alt="Saved viewport screenshot for ${esc(x.title)}" loading="lazy">`;
-  const theme=x.theme || ['#f6f5f1','#1d252a','#5e7f9c','#b8c2c8','#3b4850']; const [bg,text,accent,a,b]=theme;
-  const brand=x.brand || titleCaseDomain(x.domain); const kicker=x.kicker || x.capture_type || 'Saved page'; const deck=x.deck || x.note || x.selected_text || 'Saved to Fetch for quick visual retrieval.';
-  const nav = x.category==='Watches'?'Stories &nbsp; Watches &nbsp; Magazine':x.category==='Books'?'Culture &nbsp; Reviews &nbsp; Features':x.category==='Restaurants'?'Explore &nbsp; Food &nbsp; Neighbourhoods':'Ideas &nbsp; Guides &nbsp; Research';
-  return `<div class="page-shot ${pageKind(x)}" style="--site-bg:${bg};--site-text:${text};--site-accent:${accent};--site-mast:${bg};--site-mast-text:${text};--image-a:${a};--image-b:${b}"><div class="site-topline"></div><div class="site-mast"><div class="site-logo">${esc(brand)}</div><div class="site-nav">${nav}</div></div><div class="site-body"><div class="site-copy"><div class="site-kicker">${esc(kicker)}</div><div class="site-headline">${esc(x.title)}</div><div class="site-deck">${esc(deck)}</div><div class="site-byline">${esc(x.domain)} · ${formatPageDate(x.page_date)}</div></div><div class="site-image"></div></div></div>`;
-}
-function card(x) {
-  const type = x.capture_type || 'Page';
-  return `<article class="bookmark" data-id="${esc(x.id)}" tabindex="0" aria-label="Open ${esc(x.title)}"><div class="thumb-wrap">${pageShot(x)}<span class="type-badge">${esc(type)}</span><div class="item-actions"><button class="icon-btn ${x.starred?'starred':''}" data-star="${esc(x.id)}" title="${x.starred?'Unstar':'Star'}" aria-label="${x.starred?'Unstar':'Star'}">${x.starred?'★':'☆'}</button></div></div><div class="card-body"><h3 class="title">${esc(x.title)}</h3><div class="meta"><span class="domain"><span class="category-dot"></span>${esc(x.domain)}</span><span>${formatSaved(x.saved_at)}</span></div></div></article>`;
-}
-function render() {
-  const out=filtered(); itemsEl.className=`items ${state.view}`; itemsEl.innerHTML=out.map(card).join(''); $('empty').style.display=out.length?'none':'block';
-  $('viewTitle').textContent=state.category||(state.special==='starred'?'Starred':state.special==='recent'?'Recent':'Everything');
-  const mode=state.view==='gallery'?'visual scan':state.view==='list'?'compact list':'visual bookmarks'; $('resultText').textContent=`${out.length} item${out.length===1?'':'s'} · ${mode}`;
-  renderFilterSummary(); bindCards();
-}
-function bindCards() {
-  document.querySelectorAll('.bookmark').forEach(el=>{
-    const x=items.find(i=>String(i.id)===String(el.dataset.id)); if(!x) return;
-    const open=()=>window.open(x.url,'_blank','noopener');
-    el.addEventListener('click',e=>{if(e.target.closest('button'))return;open();});
-    el.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.target.closest('button'))open();});
-    el.addEventListener('mouseenter',e=>{if(window.innerWidth<900)return;hover.innerHTML=pageShot(x);hover.classList.add('show');movePreview(e);});
-    el.addEventListener('mousemove',movePreview); el.addEventListener('mouseleave',()=>hover.classList.remove('show'));
-  });
-  document.querySelectorAll('[data-star]').forEach(btn=>btn.addEventListener('click',async e=>{
-    e.stopPropagation(); const id=btn.dataset.star; const item=items.find(x=>String(x.id)===String(id)); if(!item)return;
-    const next=!item.starred; try{await store.update(item.id,{starred:next});item.starred=next;buildNav();syncControls();render();}catch(err){showNotice(err.message,5000);}
-  }));
-}
-function movePreview(e) {
-  const pad=18,w=Math.min(680,window.innerWidth*.48),h=w/1.6; let x=e.clientX+20;if(x+w>window.innerWidth-pad)x=e.clientX-w-20;let y=e.clientY-h*.35;y=Math.max(pad,Math.min(y,window.innerHeight-h-pad));hover.style.left=x+'px';hover.style.top=y+'px';
-}
-async function refresh() { items = await store.list(); buildNav(); syncControls(); render(); }
+async function sha256Hex(value){const d=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value)));return[...d].map(b=>b.toString(16).padStart(2,'0')).join('')}
+function makeDeviceToken(){const b=crypto.getRandomValues(new Uint8Array(32));let s='';b.forEach(x=>s+=String.fromCharCode(x));return'fetch_'+btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function updateAccountUI(){const signed=!!currentUser;$('accountLabel').textContent=supabaseClient?(signed?'Signed in':'Sign in'):'Local test mode';$('signedOutBox').hidden=signed;$('signedInBox').hidden=!signed;$('signedInAs').textContent=signed?`Signed in as ${currentUser.email||'your account'}.`:'';$('deviceSignedOut').hidden=signed;$('deviceSignedIn').hidden=!signed}
+async function signInWithPassword(){const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password)return showNotice('Enter your email and password.');const{error}=await supabaseClient.auth.signInWithPassword({email,password});if(error)return showNotice(error.message,5000);$('accountBackdrop').classList.remove('show')}
+async function sendMagicLink(){const email=$('authEmail').value.trim();if(!email)return showNotice('Enter your email first.');const redirectTo=`${location.origin}${location.pathname}`;const{error}=await supabaseClient.auth.signInWithOtp({email,options:{emailRedirectTo:redirectTo}});if(error)return showNotice(error.message,5000);showNotice('Sign-in link sent.')}
+async function refreshDevices(){if(!supabaseClient||!currentUser)return $('deviceList').innerHTML='';const{data,error}=await supabaseClient.from('fetch_capture_devices').select('id,name,created_at,last_used_at,revoked_at').order('created_at',{ascending:false});if(error)return $('deviceList').innerHTML=`<div class="empty show">${esc(error.message)}</div>`;const active=(data||[]).filter(x=>!x.revoked_at);$('deviceList').innerHTML=active.length?active.map(d=>`<div class="device-row"><div><strong>${esc(d.name)}</strong><span>${d.last_used_at?'Last used '+new Date(d.last_used_at).toLocaleDateString():'Not used yet'}</span></div><button data-revoke="${d.id}">Revoke</button></div>`).join(''):'<div class="empty show">No browser tokens yet.</div>';document.querySelectorAll('[data-revoke]').forEach(btn=>btn.addEventListener('click',async()=>{const{error}=await supabaseClient.from('fetch_capture_devices').update({revoked_at:new Date().toISOString()}).eq('id',btn.dataset.revoke);if(error)showNotice(error.message,5000);else{showNotice('Browser token revoked.');refreshDevices()}}))}
+async function generateDeviceToken(){if(!currentUser)return showNotice('Sign in first.');const name=$('deviceName').value.trim()||'Browser',token=makeDeviceToken(),token_hash=await sha256Hex(token);const{error}=await supabaseClient.from('fetch_capture_devices').insert({user_id:currentUser.id,name,token_hash});if(error)return showNotice(error.message,5000);$('deviceToken').value=token;$('tokenResult').hidden=false;await refreshDevices()}
 
-function openCapture() {
-  $('captureUrl').value=''; $('captureTitle').value=''; $('categoryInput').value=state.category||''; $('captureType').value='Page'; $('capturePageDate').value=''; $('captureImageUrl').value=''; $('captureNote').value=''; $('captureBackdrop').classList.add('show'); setTimeout(()=>$('captureUrl').focus(),0);
+function wireUI(){
+ document.querySelectorAll('[data-special]').forEach(b=>b.addEventListener('click',()=>{state.area=null;state.tag=null;state.domain='';state.date=null;state.pageDate=null;state.type=null;state.special=b.dataset.special;syncControls();render()}));
+ $('sortSelect').addEventListener('change',e=>{state.sort=e.target.value;savePrefs();render()});document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{state.view=b.dataset.view;savePrefs();syncControls();render()}));
+ const panel=$('filterPanel');$('filterBtn').addEventListener('click',e=>{e.stopPropagation();const s=!panel.classList.contains('show');panel.classList.toggle('show',s);$('filterBtn').setAttribute('aria-expanded',String(s))});panel.addEventListener('click',e=>e.stopPropagation());document.addEventListener('click',()=>panel.classList.remove('show'));
+ $('filterArea').addEventListener('change',e=>{state.area=e.target.value||null;state.special='all';state.tag=null;syncControls();render()});$('filterTag').addEventListener('change',e=>{state.tag=e.target.value||null;render()});$('filterDomain').addEventListener('input',e=>{state.domain=e.target.value.trim();render()});$('filterDate').addEventListener('change',e=>{state.date=e.target.value||null;render()});$('filterPageDate').addEventListener('change',e=>{state.pageDate=e.target.value||null;render()});$('filterType').addEventListener('change',e=>{state.type=e.target.value||null;render()});$('clearFilters').addEventListener('click',()=>{state.area=null;state.tag=null;state.domain='';state.date=null;state.pageDate=null;state.type=null;state.special='all';syncControls();render()});$('doneFilters').addEventListener('click',()=>panel.classList.remove('show'));
+ $('areaInput').addEventListener('input',()=>syncControls());$('captureBtn').addEventListener('click',openCapture);$('cancelCapture').addEventListener('click',()=>close('captureBackdrop'));$('saveCapture').addEventListener('click',saveManualCapture);
+ $('accountBtn').addEventListener('click',()=>{updateAccountUI();$('accountBackdrop').classList.add('show')});$('cancelAccount').addEventListener('click',()=>close('accountBackdrop'));$('closeAccount').addEventListener('click',()=>close('accountBackdrop'));$('signInBtn').addEventListener('click',signInWithPassword);$('sendMagicLink').addEventListener('click',sendMagicLink);$('signOutBtn').addEventListener('click',async()=>{await supabaseClient.auth.signOut();close('accountBackdrop')});
+ $('deviceBtn').addEventListener('click',async()=>{updateAccountUI();$('deviceBackdrop').classList.add('show');await refreshDevices()});$('closeDevice').addEventListener('click',()=>close('deviceBackdrop'));$('generateDeviceToken').addEventListener('click',generateDeviceToken);$('copyDeviceToken').addEventListener('click',async()=>{await navigator.clipboard.writeText($('deviceToken').value);showNotice('Token copied.')});
+ ['captureBackdrop','accountBackdrop','deviceBackdrop'].forEach(id=>$(id).addEventListener('click',e=>{if(e.target===$(id))close(id)}));document.addEventListener('keydown',e=>{if(e.key==='Escape'){close('captureBackdrop');close('accountBackdrop');close('deviceBackdrop');panel.classList.remove('show')}})
 }
-async function saveManualCapture() {
-  const url=$('captureUrl').value.trim(); const title=$('captureTitle').value.trim(); const category=$('categoryInput').value.trim();
-  if(!url || !title || !category){showNotice('URL, title and category are required.');return;}
-  const domain=domainFrom(url); if(!domain){showNotice('That URL does not look valid.');return;}
-  const item={id:crypto.randomUUID(),title,url,domain,category,saved_at:new Date().toISOString(),page_date:$('capturePageDate').value||null,capture_type:$('captureType').value,starred:false,note:$('captureNote').value.trim(),selected_text:$('captureType').value==='Text'?$('captureNote').value.trim():null,image_url:$('captureImageUrl').value.trim()||null,screenshot_url:null};
-  try { await store.save(item); $('captureBackdrop').classList.remove('show'); await refresh(); showNotice('Saved to Fetch.'); }
-  catch(err){console.error(err);showNotice(err.message||'Could not save this item.',5000);}
-}
+function close(id){$(id).classList.remove('show')}
+function savePrefs(){localStorage.setItem(PREF_KEY,JSON.stringify({view:state.view,sort:state.sort}))}
 
-
-async function sha256Hex(value) {
-  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)));
-  return [...digest].map(b=>b.toString(16).padStart(2,'0')).join('');
-}
-function makeDeviceToken() {
-  const bytes = crypto.getRandomValues(new Uint8Array(32));
-  let binary=''; bytes.forEach(b=>binary+=String.fromCharCode(b));
-  return 'fetch_' + btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-}
-function updateAccountUI() {
-  const label=$('accountLabel');
-  if (!supabaseClient) { label.textContent='Local test mode'; return; }
-  label.textContent=currentUser ? 'Signed in' : 'Sign in';
-  $('signedOutBox').style.display=currentUser?'none':'block';
-  $('signedInBox').style.display=currentUser?'block':'none';
-  $('signedInAs').textContent=currentUser ? `Signed in as ${currentUser.email || 'your account'}.` : '';
-  $('deviceSignedOut').style.display=currentUser?'none':'block';
-  $('deviceSignedIn').style.display=currentUser?'block':'none';
-}
-async function signInWithPassword() {
-  if(!supabaseClient){showNotice('Supabase is not connected.');return;}
-  const email=$('authEmail').value.trim(), password=$('authPassword').value;
-  if(!email||!password){showNotice('Enter your email and password.');return;}
-  const {error}=await supabaseClient.auth.signInWithPassword({email,password});
-  if(error){showNotice(error.message,5000);return;}
-  $('accountBackdrop').classList.remove('show'); showNotice('Signed in to Fetch.');
-}
-async function sendMagicLink() {
-  if(!supabaseClient){showNotice('Supabase is not connected.');return;}
-  const email=$('authEmail').value.trim(); if(!email){showNotice('Enter your email first.');return;}
-  const redirectTo = location.protocol.startsWith('http') ? `${location.origin}${location.pathname}` : undefined;
-  const {error}=await supabaseClient.auth.signInWithOtp({email, options: redirectTo ? {emailRedirectTo:redirectTo} : {}});
-  if(error){showNotice(error.message,5000);return;}
-  showNotice('Sign-in link sent.');
-}
-async function refreshDevices() {
-  if(!supabaseClient||!currentUser){$('deviceList').innerHTML='';return;}
-  const {data,error}=await supabaseClient.from('fetch_capture_devices').select('id,name,created_at,last_used_at,revoked_at').order('created_at',{ascending:false});
-  if(error){$('deviceList').innerHTML=`<div class="empty">${esc(error.message)}</div>`;return;}
-  const active=(data||[]).filter(x=>!x.revoked_at);
-  $('deviceList').innerHTML=active.length ? active.map(d=>`<div class="device-row"><div><strong>${esc(d.name)}</strong><span>${d.last_used_at?'Last used '+new Date(d.last_used_at).toLocaleDateString():'Not used yet'}</span></div><button data-revoke-device="${d.id}">Revoke</button></div>`).join('') : '<div class="empty">No browser tokens yet.</div>';
-  document.querySelectorAll('[data-revoke-device]').forEach(btn=>btn.addEventListener('click',async()=>{
-    const {error:revokeError}=await supabaseClient.from('fetch_capture_devices').update({revoked_at:new Date().toISOString()}).eq('id',btn.dataset.revokeDevice);
-    if(revokeError) showNotice(revokeError.message,5000); else {showNotice('Browser token revoked.');refreshDevices();}
-  }));
-}
-async function generateDeviceToken() {
-  if(!supabaseClient||!currentUser){showNotice('Sign in first.');return;}
-  const name=$('deviceName').value.trim()||'Browser';
-  const token=makeDeviceToken(), token_hash=await sha256Hex(token);
-  const {error}=await supabaseClient.from('fetch_capture_devices').insert({user_id:currentUser.id,name,token_hash});
-  if(error){showNotice(error.message,5000);return;}
-  $('deviceToken').value=token; $('tokenResult').style.display='block'; await refreshDevices();
-}
-
-function wireUI() {
-  document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.filter==='all'){state.category=null;state.domain='';state.date=null;state.pageDate=null;state.type=null;state.special='all';}else{state.category=null;state.special=b.dataset.filter;}syncControls();render();}));
-  $('searchInput').addEventListener('input',e=>{state.query=e.target.value;render();});
-  $('sortSelect').addEventListener('change',e=>{state.sort=e.target.value;localStorage.setItem(PREF_KEY,JSON.stringify({view:state.view,sort:state.sort}));render();});
-  document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{state.view=b.dataset.view;localStorage.setItem(PREF_KEY,JSON.stringify({view:state.view,sort:state.sort}));syncControls();render();}));
-  const filterPanel=$('filterPanel');
-  $('filterBtn').addEventListener('click',e=>{e.stopPropagation();const show=!filterPanel.classList.contains('show');filterPanel.classList.toggle('show',show);$('filterBtn').setAttribute('aria-expanded',String(show));});
-  filterPanel.addEventListener('click',e=>e.stopPropagation());
-  $('filterCategory').addEventListener('change',e=>{state.category=e.target.value||null;state.special='all';syncControls();render();});
-  $('filterDomain').addEventListener('input',e=>{state.domain=e.target.value.trim();syncControls();render();});
-  $('filterDate').addEventListener('change',e=>{state.date=e.target.value||null;syncControls();render();});
-  $('filterPageDate').addEventListener('change',e=>{state.pageDate=e.target.value||null;syncControls();render();});
-  $('filterType').addEventListener('change',e=>{state.type=e.target.value||null;syncControls();render();});
-  $('clearFilters').addEventListener('click',()=>{state.category=null;state.domain='';state.date=null;state.pageDate=null;state.type=null;state.special='all';syncControls();render();});
-  $('doneFilters').addEventListener('click',()=>{filterPanel.classList.remove('show');$('filterBtn').setAttribute('aria-expanded','false');});
-  document.addEventListener('click',()=>{filterPanel.classList.remove('show');$('filterBtn').setAttribute('aria-expanded','false');});
-  $('captureBtn').addEventListener('click',openCapture); $('cancelCapture').addEventListener('click',()=>$('captureBackdrop').classList.remove('show')); $('saveCapture').addEventListener('click',saveManualCapture);
-  $('accountBtn').addEventListener('click',()=>{updateAccountUI();$('accountBackdrop').classList.add('show');});
-  $('cancelAccount').addEventListener('click',()=>$('accountBackdrop').classList.remove('show')); $('closeAccount').addEventListener('click',()=>$('accountBackdrop').classList.remove('show'));
-  $('signInBtn').addEventListener('click',signInWithPassword); $('sendMagicLink').addEventListener('click',sendMagicLink);
-  $('signOutBtn').addEventListener('click',async()=>{if(supabaseClient)await supabaseClient.auth.signOut();$('accountBackdrop').classList.remove('show');showNotice('Signed out.');});
-  $('deviceBtn').addEventListener('click',async()=>{updateAccountUI();$('deviceBackdrop').classList.add('show');await refreshDevices();});
-  $('closeDevice').addEventListener('click',()=>$('deviceBackdrop').classList.remove('show')); $('generateDeviceToken').addEventListener('click',generateDeviceToken);
-  $('copyDeviceToken').addEventListener('click',async()=>{await navigator.clipboard.writeText($('deviceToken').value);showNotice('Token copied.');});
-  $('captureBackdrop').addEventListener('click',e=>{if(e.target===$('captureBackdrop'))$('captureBackdrop').classList.remove('show');});
-  $('accountBackdrop').addEventListener('click',e=>{if(e.target===$('accountBackdrop'))$('accountBackdrop').classList.remove('show');});
-  $('deviceBackdrop').addEventListener('click',e=>{if(e.target===$('deviceBackdrop'))$('deviceBackdrop').classList.remove('show');});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('captureBackdrop').classList.remove('show');$('accountBackdrop').classList.remove('show');$('deviceBackdrop').classList.remove('show');filterPanel.classList.remove('show');}});
-}
-
-(async function start(){
-  wireUI(); await initStore(); updateAccountUI(); await refresh();
-  if(supabaseClient && !currentUser) showNotice('Fetch is connected. Sign in to see your library.', 5000);
-})();
+(async function start(){makeSearch();wireUI();await initStore();updateAccountUI();await refresh();if(searchInput){searchInput.value='';state.query=''}if(supabaseClient&&!currentUser)showNotice('Fetch is connected. Sign in to see your library.',4500)})();

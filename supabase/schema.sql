@@ -84,3 +84,42 @@ drop policy if exists "Fetch users read own screenshots" on storage.objects;
 create policy "Fetch users read own screenshots" on storage.objects
 for select to authenticated
 using (bucket_id = 'fetch-screenshots' and (storage.foldername(name))[1] = (select auth.uid())::text);
+
+-- v0.4.2 tags
+create table if not exists public.fetch_tags (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null,
+  normalized_name text not null,
+  created_at timestamptz not null default now(),
+  unique (user_id, normalized_name)
+);
+create table if not exists public.fetch_item_tags (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  item_id uuid not null references public.fetch_items(id) on delete cascade,
+  tag_id uuid not null references public.fetch_tags(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (item_id, tag_id)
+);
+
+create index if not exists fetch_tags_user_name_idx on public.fetch_tags (user_id, normalized_name);
+create index if not exists fetch_item_tags_user_idx on public.fetch_item_tags (user_id);
+create index if not exists fetch_item_tags_tag_idx on public.fetch_item_tags (tag_id);
+alter table public.fetch_tags enable row level security;
+alter table public.fetch_item_tags enable row level security;
+grant select, insert, update, delete on public.fetch_tags to authenticated;
+grant select, insert, update, delete on public.fetch_item_tags to authenticated;
+drop policy if exists "Fetch users read own tags" on public.fetch_tags;
+create policy "Fetch users read own tags" on public.fetch_tags for select to authenticated using ((select auth.uid()) = user_id);
+drop policy if exists "Fetch users insert own tags" on public.fetch_tags;
+create policy "Fetch users insert own tags" on public.fetch_tags for insert to authenticated with check ((select auth.uid()) = user_id);
+drop policy if exists "Fetch users update own tags" on public.fetch_tags;
+create policy "Fetch users update own tags" on public.fetch_tags for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+drop policy if exists "Fetch users delete own tags" on public.fetch_tags;
+create policy "Fetch users delete own tags" on public.fetch_tags for delete to authenticated using ((select auth.uid()) = user_id);
+drop policy if exists "Fetch users read own item tags" on public.fetch_item_tags;
+create policy "Fetch users read own item tags" on public.fetch_item_tags for select to authenticated using ((select auth.uid()) = user_id);
+drop policy if exists "Fetch users insert own item tags" on public.fetch_item_tags;
+create policy "Fetch users insert own item tags" on public.fetch_item_tags for insert to authenticated with check ((select auth.uid()) = user_id);
+drop policy if exists "Fetch users delete own item tags" on public.fetch_item_tags;
+create policy "Fetch users delete own item tags" on public.fetch_item_tags for delete to authenticated using ((select auth.uid()) = user_id);

@@ -1,0 +1,12 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Save to Fetch</title><link rel="stylesheet" href="extension.css"></head>
+<body><main class="panel"><header><div class="brand"><img src="icons/icon-48.png" alt=""><div><h1>Fetch</h1><p>Save this for later.</p></div></div><button id="options" class="icon-button" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21h-4v-.09A1.7 1.7 0 0 0 9 19.35a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.03H3v-4h.09A1.7 1.7 0 0 0 4.65 9a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1.03-1.56V3h4v.09A1.7 1.7 0 0 0 15 4.65a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.56 1.03H21v4h-.09A1.7 1.7 0 0 0 19.4 15Z"/></svg></button></header>
+<div id="status" class="status">Reading page…</div>
+<div class="preview"><div class="shot" id="shot"></div><div class="preview-copy"><strong id="titlePreview">Page</strong><span id="domainPreview"></span></div></div>
+<label>Title<input id="title"></label>
+<label>Area<input id="area" list="areaList" placeholder="Type or create…"><datalist id="areaList"></datalist></label>
+<div class="tag-field"><label>Tags <span>optional</span></label><div class="tag-box"><div id="tagChips" class="tag-chips"></div><input id="tagInput" placeholder="Add a tag…" autocomplete="off"></div><div id="tagSuggestions" class="suggestions"></div></div>
+<label>Saved as<select id="type"><option>Page</option><option>Text</option><option>Image link</option></select></label>
+<label id="selectionWrap" class="hidden">Selected text<textarea id="selection"></textarea></label>
+<label id="imageWrap" class="hidden">Image link<input id="imageUrl" type="url"></label>
+<div class="quiet-note" id="dateNote"></div>
+<footer><button id="cancel" class="secondary">Cancel</button><button id="save" class="primary">Save</button></footer></main><script src="capture.js"></script></body></html>
