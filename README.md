@@ -1,4 +1,4 @@
-# Fetch v0.6.8
+# Fetch v0.6.9
 
 New in v0.6.3: the Fetch dog-with-newspaper mark is now the official app icon across the web app, favicon/PWA assets, and branded UI. The sidebar icon now uses the solid TV-style slate-blue tile, and Add link uses the same slate-blue primary-button treatment. No database changes.
 
@@ -74,3 +74,11 @@ The sidebar footer now reads the displayed version from `APP_VERSION`, preventin
 - Keeps desktop cards at a consistent, comfortable width and adds columns as room becomes available.
 - Packs sparse and filtered results from the left with a normal fixed gap.
 - Preserves the existing tablet and mobile card rules.
+
+## v0.6.9 wide desktop card width
+
+- Restores the established 360 px card/thumbnail width on very wide desktop windows.
+- A 2048 px-class iMac window now uses four full-size columns rather than five compressed columns.
+- Cards and filtered results remain packed from the left with a fixed 20 px gap.
+- Existing MacBook, iPad and iPhone breakpoints are unchanged.
+
