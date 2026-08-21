@@ -1,4 +1,4 @@
-# Fetch v0.6.5
+# Fetch v0.6.8
 
 New in v0.6.3: the Fetch dog-with-newspaper mark is now the official app icon across the web app, favicon/PWA assets, and branded UI. The sidebar icon now uses the solid TV-style slate-blue tile, and Add link uses the same slate-blue primary-button treatment. No database changes.
 
@@ -66,3 +66,11 @@ The sidebar footer now reads the displayed version from `APP_VERSION`, preventin
 - Hover previews refresh an expired screenshot URL automatically.
 - A hover preview is not shown until its image has loaded, preventing the large broken-image panel.
 - Card thumbnails also retry once with a fresh signed URL if an old URL expires while Fetch remains open.
+
+
+## v0.6.8 wide desktop grid
+
+- Removes the desktop card-grid width cap that limited wide displays to roughly three columns.
+- Keeps desktop cards at a consistent, comfortable width and adds columns as room becomes available.
+- Packs sparse and filtered results from the left with a normal fixed gap.
+- Preserves the existing tablet and mobile card rules.

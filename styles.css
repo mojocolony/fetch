@@ -129,8 +129,8 @@
 
 /* v0.5.1 responsive library, true gallery, and local star updates */
 .content{max-width:none;width:100%}
-.items.cards{grid-template-columns:repeat(auto-fit,minmax(310px,1fr));align-items:start;max-width:1180px}
-.cards .item-card{width:100%;max-width:380px}
+.items.cards{grid-template-columns:repeat(auto-fill,minmax(300px,330px));align-items:start;justify-content:start;max-width:none}
+.cards .item-card{width:100%;max-width:none}
 .item-card.removing{opacity:0;transform:scale(.985);transition:opacity .14s ease,transform .14s ease}
 
 /* Gallery is a visual contact sheet rather than a larger card view. */
@@ -149,8 +149,8 @@
 .gallery .item-card:hover .type-pill,.gallery .item-card:hover .card-actions,.gallery .item-card:focus-within .type-pill,.gallery .item-card:focus-within .card-actions{opacity:1}
 .gallery .item-menu{top:54px;right:9px}
 
-@media(min-width:1450px){.items.cards{max-width:1220px}.cards .item-card{max-width:386px}}
-@media(max-width:1100px){.items.cards{grid-template-columns:repeat(auto-fit,minmax(290px,1fr));max-width:none}.cards .item-card{max-width:none}.items.gallery{grid-template-columns:repeat(auto-fill,minmax(225px,1fr))}}
+@media(min-width:1450px){.items.cards{grid-template-columns:repeat(auto-fill,minmax(300px,330px));justify-content:start;max-width:none}}
+@media(max-width:1100px){.items.cards{grid-template-columns:repeat(auto-fill,minmax(290px,330px));justify-content:start;max-width:none}.cards .item-card{max-width:none}.items.gallery{grid-template-columns:repeat(auto-fill,minmax(225px,1fr))}}
 @media(max-width:900px){.items.gallery{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}.gallery .item-card{aspect-ratio:4/3}.gallery .card-body{opacity:1;transform:none;padding-top:40px!important}.gallery .type-pill,.gallery .card-actions{opacity:1}}
 
 /* v0.6.0 mobile/iPad pass */
@@ -332,3 +332,5 @@
   object-fit:cover;
   filter:none !important;
 }
+
+/* v0.6.8 — wide desktop cards pack left and add columns without stretching sparse results */
